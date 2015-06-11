@@ -95,6 +95,7 @@ var sigAttrs = ['data-scope', 'data-prop'];
 pw.node.isSignificant = function(node) {
   var attr;
 
+  //TODO use each
   for(var i = 0; i < sigAttrs.length; i++) {
     attr = sigAttrs[i]
 
@@ -532,16 +533,15 @@ pw.state = {};
 pw.state.build = function (sigArr, parentObj) {
   var retState = [];
   for (var i = 0; i < sigArr.length; i++) {
-    var elemState = pw.state.buildForElem(sigArr[i], parentObj);
-    if (!elemState) continue;
-    retState.push(elemState);
+    var nodeState = pw.state.buildForNode(sigArr[i], parentObj);
+    if (!nodeState) continue;
+    retState.push(nodeState);
   }
 
   return retState;
 }
 
-//TODO rename to buildForNode
-pw.state.buildForElem = function (sigTuple, parentObj) {
+pw.state.buildForNode = function (sigTuple, parentObj) {
   var sig = sigTuple[0];
   var obj = {};
 
@@ -557,8 +557,8 @@ pw.state.buildForElem = function (sigTuple, parentObj) {
 }
 
 // creates and returns a new pw_State for the document or node
-pw.state.init = function (elem) {
-  return new pw_State(elem);
+pw.state.init = function (node) {
+  return new pw_State(node);
 }
 
 
@@ -566,27 +566,27 @@ pw.state.init = function (elem) {
   pw_State represents the state for a document or node.
 */
 
-var pw_State = function (elem) {
-  this.initial = pw.state.build(pw.node.significant(elem));
+var pw_State = function (node) {
+  this.initial = pw.state.build(pw.node.significant(node));
   this.current = JSON.parse(JSON.stringify(this.initial));
   this.diffs = [];
 }
 
 // diff the node and capture any changes
-pw_State.prototype.diff = function (elem) {
-  return _.map(_.flatten(pw.state.build(pw.node.significant(pw.node.scope(elem)))), function (elemState) {
-    var last = this.elem(elemState);
+pw_State.prototype.diff = function (node) {
+  return _.map(_.flatten(pw.state.build(pw.node.significant(pw.node.scope(node)))), function (nodeState) {
+    var last = this.node(nodeState);
 
     var diffObj = {
-      elem: elem,
+      node: node,
       guid: pw.util.guid(),
-      scope: elemState.scope,
-      id: elemState.id
+      scope: nodeState.scope,
+      id: nodeState.id
     };
 
-    for (var key in elemState) {
-      if(!last || elemState[key] !== last[key]) {
-        diffObj[key] = elemState[key];
+    for (var key in nodeState) {
+      if(!last || nodeState[key] !== last[key]) {
+        diffObj[key] = nodeState[key];
       }
     }
 
@@ -650,9 +650,9 @@ pw_State.prototype.rollback = function (guid) {
 
 // returns the current state for a node
 //TODO rename to node
-pw_State.prototype.elem = function (elemState) {
+pw_State.prototype.node = function (nodeState) {
   return _.filter(_.flatten(this.current), function (s) {
-    return s.scope === elemState.scope && s.id === elemState.id;
+    return s.scope === nodeState.scope && s.id === nodeState.id;
   })[0];
 }
 /*

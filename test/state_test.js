@@ -8,8 +8,8 @@ describe('pw.state', function () {
     it('builds a representation of the state');
   });
 
-  describe('buildForElem', function () {
-    it('builds a representation of the elem state');
+  describe('buildForNode', function () {
+    it('builds a representation of the node state');
   });
 
   describe('init', function () {

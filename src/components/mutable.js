@@ -3,8 +3,8 @@ pw.component.register('mutable', function (view, config) {
   this.mutate = function (target) {
     _.each(this.state.diff(target), function (diff) {
       //TODO determine where this cleanup should happen and if
-      // we even need to track `elem` to begin with
-      delete diff.elem;
+      // we even need to track `node` to begin with
+      delete diff.node;
 
       var input = {};
       var datum = _.clone(diff);

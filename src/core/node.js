@@ -64,6 +64,7 @@ var sigAttrs = ['data-scope', 'data-prop'];
 pw.node.isSignificant = function(node) {
   var attr;
 
+  //TODO use each
   for(var i = 0; i < sigAttrs.length; i++) {
     attr = sigAttrs[i]
 
@@ -254,19 +255,18 @@ pw.node.bindDataToScope = function (data, scope, node) {
     }
 
     if(typeof v === 'object') {
-      pw.node.bindAttributesToDoc(v, p['doc']);
+      pw.node.bindAttributesToNode(v, p['doc']);
     } else {
-      pw.node.bindValueToDoc(v, p['doc']);
+      pw.node.bindValueToNode(v, p['doc']);
     }
   }
 }
 
-//TODO rename to bindAttributesToNode
-pw.node.bindAttributesToDoc = function (attrs, doc) {
+pw.node.bindAttributesToNode = function (attrs, doc) {
   for(var attr in attrs) {
     var value = attrs[attr];
     if(attr === 'content') {
-      pw.node.bindValueToDoc(value, doc);
+      pw.node.bindValueToNode(value, doc);
       continue;
     }
 
@@ -276,8 +276,7 @@ pw.node.bindAttributesToDoc = function (attrs, doc) {
   }
 }
 
-//TODO rename to bindValueToNode
-pw.node.bindValueToDoc = function (value, doc) {
+pw.node.bindValueToNode = function (value, doc) {
   if(pw.node.isTagWithoutValue(doc)) return;
 
   //TODO handle other form fields (port from pakyow-presenter)

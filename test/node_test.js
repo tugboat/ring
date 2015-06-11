@@ -139,11 +139,11 @@ describe('pw.node', function () {
     it('binds the data');
   });
 
-  describe('bindAttributesToDoc', function () {
+  describe('bindAttributesToNode', function () {
     it('binds the attributes');
   });
 
-  describe('bindValueToDoc', function () {
+  describe('bindValueToNode', function () {
     it('binds the value');
   });
 
