@@ -1,7 +1,13 @@
 pw.collection = {};
 
-pw.collection.init = function (views, selector) {
-  return new pw_Collection(views, selector);
+pw.collection.init = function (view_or_views, selector) {
+  if (view_or_views instanceof pw_Collection) {
+    return view_or_views
+  } else if (view_or_views.constructor !== Array) {
+    view_or_views = [view_or_views];
+  }
+
+  return new pw_Collection(view_or_views, selector);
 };
 
 pw.collection.fromNodes = function (nodes, selector) {

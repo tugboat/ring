@@ -286,30 +286,27 @@ pw.node.bindDataToScope = function (data, scope, node) {
     }
 
     if(typeof v === 'object') {
-      pw.node.bindAttributesToDoc(v, p['doc']);
+      pw.node.bindAttributesToNode(v, p['doc']);
     } else {
-      pw.node.bindValueToDoc(v, p['doc']);
+      pw.node.bindValueToNode(v, p['doc']);
     }
   }
 }
 
-//TODO rename to bindAttributesToNode
-pw.node.bindAttributesToDoc = function (attrs, doc) {
+pw.node.bindAttributesToNode = function (attrs, doc) {
   for(var attr in attrs) {
     var value = attrs[attr];
     if(attr === 'content') {
-      pw.node.bindValueToDoc(value, doc);
+      pw.node.bindValueToNode(value, doc);
       continue;
     }
 
     if(_.isFunction(value)) value = value.call(doc.getAttribute(attr));
-    //TODO what's up with setAttr?
-    !value ? pw.node.removeAttr(doc, attr) : doc.setAttribute(attr, value); //pw.node.setAttr(doc, attr, value);
+    !value ? pw.node.removeAttr(doc, attr) : pw.node.setAttr(doc, attr, value);
   }
 }
 
-//TODO rename to bindValueToNode
-pw.node.bindValueToDoc = function (value, doc) {
+pw.node.bindValueToNode = function (value, doc) {
   if(pw.node.isTagWithoutValue(doc)) return;
 
   //TODO handle other form fields (port from pakyow-presenter)
@@ -372,13 +369,19 @@ pw.node.byAttr = function (node, attr, compareValue) {
 }
 
 pw.node.setAttr = function (node, attr, value) {
-  node.setAttribute(attr, _.map(_.pairs(value), function (pair) {
-    return pair[0] + ':' + pair[1];
-  }).join(';'));
+  node.setAttribute(attr, value);
 }
 
 pw.node.removeAttr = function (node, attr) {
   node.removeAttribute(attr);
+}
+
+pw.node.hasAttr = function (node, attr) {
+  return node.hasAttribute(attr);
+}
+
+pw.node.getAttr = function (node, attr) {
+  return node.getAttribute(attr);
 }
 
 pw.node.all = function (node) {
@@ -446,14 +449,7 @@ pw.node.title = function (node, value) {
 pw.attrs = {};
 
 pw.attrs.init = function (view_or_views) {
-  var views;
-  if (view_or_views instanceof pw_View) {
-    views = [view_or_views];
-  } else {
-    views = view_or_views;
-  }
-
-  return new pw_Attrs(views);
+  return new pw_Attrs(pw.collection.init(view_or_views));
 };
 
 var attrTypes = {
@@ -462,8 +458,8 @@ var attrTypes = {
   mult: ['class']
 };
 
-var pw_Attrs = function (views) {
-  this.views = views;
+var pw_Attrs = function (collection) {
+  this.views = collection.views;
 };
 
 pw_Attrs.prototype.findType = function (attr) {
@@ -477,11 +473,11 @@ pw_Attrs.prototype.findValue = function (view, attr) {
   if (attr === 'class') {
     return view.node.classList;
   } else if (attr === 'style') {
-
+    return view.node.style;
   } else if (this.findType(attr) === 'bool') {
-
+    return pw.node.hasAttr(view.node, attr);
   } else { // just a text attr
-
+    return pw.node.getAttr(view.node, attr);
   }
 };
 
@@ -494,16 +490,24 @@ pw_Attrs.prototype.set = function (attr, value) {
 pw_Attrs.prototype.ensure = function (attr, value) {
   _.each(this.views, function (view) {
     var currentValue = this.findValue(view, attr);
+
     if (attr === 'class') {
       if (!currentValue.contains(value)) {
         currentValue.add(value);
       }
     } else if (attr === 'style') {
-
+      _.each(_.pairs(value), function (kv) {
+        view.node.style[kv[0]] = kv[1];
+      });
     } else if (this.findType(attr) === 'bool') {
-
+      if (!pw.node.hasAttr(view.node, attr)) {
+        pw.node.setAttr(view.node, attr, attr);
+      }
     } else { // just a text attr
-
+      var currentValue = pw.node.getAttr(view.node, attr) || '';
+      if (!currentValue.match(value)) {
+        pw.node.setAttr(view.node, attr, currentValue + value);
+      }
     }
   }, this);
 };
@@ -516,11 +520,15 @@ pw_Attrs.prototype.deny = function (attr, value) {
         currentValue.remove(value);
       }
     } else if (attr === 'style') {
-
+      _.each(_.pairs(value), function (kv) {
+        view.node.style[kv[0]] = view.node.style[kv[0]].replace(kv[1], '');
+      });
     } else if (this.findType(attr) === 'bool') {
-
+      if (pw.node.hasAttr(view.node, attr)) {
+        pw.node.removeAttr(view.node, attr);
+      }
     } else { // just a text attr
-
+      pw.node.setAttr(view.node, attr, pw.node.getAttr(view.node, attr).replace(value, ''));
     }
   }, this);
 };
@@ -649,7 +657,6 @@ pw_State.prototype.rollback = function (guid) {
 }
 
 // returns the current state for a node
-//TODO rename to node
 pw_State.prototype.node = function (nodeState) {
   return _.filter(_.flatten(this.current), function (s) {
     return s.scope === nodeState.scope && s.id === nodeState.id;
@@ -781,8 +788,14 @@ pw_View.prototype.apply = function (data, cb) {
 };
 pw.collection = {};
 
-pw.collection.init = function (views, selector) {
-  return new pw_Collection(views, selector);
+pw.collection.init = function (view_or_views, selector) {
+  if (view_or_views instanceof pw_Collection) {
+    return view_or_views
+  } else if (view_or_views.constructor !== Array) {
+    view_or_views = [view_or_views];
+  }
+
+  return new pw_Collection(view_or_views, selector);
 };
 
 pw.collection.fromNodes = function (nodes, selector) {

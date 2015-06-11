@@ -271,8 +271,7 @@ pw.node.bindAttributesToNode = function (attrs, doc) {
     }
 
     if(_.isFunction(value)) value = value.call(doc.getAttribute(attr));
-    //TODO what's up with setAttr?
-    !value ? pw.node.removeAttr(doc, attr) : doc.setAttribute(attr, value); //pw.node.setAttr(doc, attr, value);
+    !value ? pw.node.removeAttr(doc, attr) : pw.node.setAttr(doc, attr, value);
   }
 }
 
@@ -339,13 +338,19 @@ pw.node.byAttr = function (node, attr, compareValue) {
 }
 
 pw.node.setAttr = function (node, attr, value) {
-  node.setAttribute(attr, _.map(_.pairs(value), function (pair) {
-    return pair[0] + ':' + pair[1];
-  }).join(';'));
+  node.setAttribute(attr, value);
 }
 
 pw.node.removeAttr = function (node, attr) {
   node.removeAttribute(attr);
+}
+
+pw.node.hasAttr = function (node, attr) {
+  return node.hasAttribute(attr);
+}
+
+pw.node.getAttr = function (node, attr) {
+  return node.getAttribute(attr);
 }
 
 pw.node.all = function (node) {

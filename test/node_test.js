@@ -4,6 +4,12 @@ var expect = helper.expect;
 require('../src/core/node');
 
 describe('pw.node', function () {
+  var doc, node;
+  beforeEach(function () {
+    doc = helper.loadDoc('node.html');
+    node = doc.getElementsByTagName('div')[0];
+  });
+
   describe('value', function () {
     describe('when node is a checkbox', function () {
       it('returns true when checked');
@@ -192,11 +198,36 @@ describe('pw.node', function () {
   });
 
   describe('setAttr', function () {
-    //TODO I have no idea what this is
+    it('sets the attribute value on the node', function () {
+      pw.node.setAttr(node, 'title', 'foo');
+      expect(node.title).to.equal('foo');
+    });
   });
 
   describe('removeAttr', function () {
-    it('removes the attribute from the node');
+    it('removes the attribute from the node', function () {
+      node.title = 'foo';
+      pw.node.removeAttr(node, 'title');
+      expect(node.title).to.equal('');
+    });
+  });
+
+  describe('hasAttr', function () {
+    it('returns true if the node has the attribute', function () {
+      node.title = 'foo';
+      expect(pw.node.hasAttr(node, 'title')).to.equal(true);
+    });
+
+    it('returns false if the node does not have the attribute', function () {
+      expect(pw.node.hasAttr(node, 'title')).to.equal(false);
+    });
+  });
+
+  describe('getAttr', function () {
+    it('returns the attribute from the node', function () {
+      node.title = 'foo';
+      expect(pw.node.getAttr(node, 'title')).to.equal('foo');
+    });
   });
 
   describe('all', function () {
