@@ -1,0 +1,22 @@
+{
+  "name": "pakyow-js",
+  "version": "0.0.0",
+  "description": "Javascript library for pakyow",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --reporter spec"
+  },
+  "author": "Bryan Powell",
+  "license": "MIT",
+  "dependencies": {
+    "underscore": "1.6.0"
+  },
+  "devDependencies": {
+    "mocha": "*",
+    "expect.js": "*",
+    "object-inspect": "*",
+    "jsdom": "*",
+    "smash": "*",
+    "uglify-js": "*"
+  }
+}

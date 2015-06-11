@@ -1,0 +1,48 @@
+<html>
+<head>
+  <script src="../pakyow.js"></script>
+  <script src="../node_modules/underscore/underscore.js"></script>
+</head>
+<body data-ui="todos">
+  <div data-scope="list" data-id="1">
+    <div data-scope="task" data-id="1">
+      <input type="checkbox" data-prop="completed">
+
+      <label data-prop="body">
+        foo
+      </label>
+    </div>
+
+    <div data-scope="task" data-id="2">
+      <input type="checkbox" data-prop="completed" checked>
+
+      <label data-prop="body">
+        bar
+      </label>
+    </div>
+  </div>
+
+  <script>
+    pw.component.register('todos', function () {
+
+      this.init = function () {
+        // registers this component as an endpoint for all todo scopes
+        // anytime a todo mutates, the fn will be called
+        this.listen({ scope: 'todo' }, function (data) {
+          console.log('mutated');
+          console.log(data);
+        });
+      }
+
+      //TODO should be able to trigger mutations on something within it
+    });
+
+    // create the application's view
+    var view = pw.view.init(document);
+
+    // register components
+    //TODO thinking this should happen in view?
+    pw.component.findAndInit(document);
+  </script>
+</body>
+</html>
