@@ -41,19 +41,51 @@ pw_View.prototype.remove = function () {
   pw.node.remove(this.node);
 };
 
-//TODO clear, title
+pw_View.prototype.clear = function () {
+  pw.node.clear(this.node);
+};
+
+pw_View.prototype.title = function (value) {
+  pw.node.title(this.node, value);
+};
 
 pw_View.prototype.text = function (value) {
   pw.node.text(node, value);
 };
 
-//TODO html, append, prepend, after, before, replace
+pw_View.prototype.html = function (value) {
+  pw.node.html(node, value);
+};
+
+pw_View.prototype.after = function (view) {
+  pw.node.after(this.node, view.node);
+}
+
+pw_View.prototype.before = function (view) {
+  pw.node.before(this.node, view.node);
+}
+
+pw_View.prototype.replace = function (view) {
+  pw.node.replace(this.node, view.node);
+}
+
+pw_View.prototype.append = function (view) {
+  pw.node.append(this.node, view.node);
+}
+
+pw_View.prototype.prepend = function (view) {
+  pw.node.prepend(this.node, view.node);
+}
 
 pw_View.prototype.attrs = function () {
   return pw.attrs.init(this);
 };
 
-//TODO scope
+pw_View.prototype.scope = function (name) {
+  return _.map(pw.node.byAttr(this.node, 'data-scope', name), function (node) {
+    return pw.view.init(node);
+  });
+};
 
 pw_View.prototype.prop = function (name) {
   return _.map(pw.node.byAttr(this.node, 'data-prop', name), function (node) {
@@ -61,10 +93,32 @@ pw_View.prototype.prop = function (name) {
   });
 };
 
-//TODO component, with, match, for, repeat
-
-pw_View.prototype.bind = function (data) {
-  pw.node.bind(data, this.node);
+pw_View.prototype.component = function (name) {
+  return _.map(pw.node.byAttr(this.node, 'data-ui', name), function (node) {
+    return pw.view.init(node);
+  });
 };
 
-//TODO apply
+pw_View.prototype.with = function (cb) {
+  pw.node.with(this.node, cb);
+};
+
+pw_View.prototype.match = function (data) {
+  pw.node.match(this.node, data);
+};
+
+pw_View.prototype.for = function (data, cb) {
+  pw.node.for(this.node, data, cb);
+};
+
+pw_View.prototype.repeat = function (data, cb) {
+  pw.node.repeat(this.node, data, cb);
+};
+
+pw_View.prototype.bind = function (data, cb) {
+  pw.node.bind(data, this.node, cb);
+};
+
+pw_View.prototype.apply = function (data, cb) {
+  pw.node.apply(data, this.node, cb);
+};

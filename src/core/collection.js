@@ -63,7 +63,23 @@ pw_Collection.prototype.remove = function() {
   });
 };
 
-//TODO clear, text, html
+pw_Collection.prototype.clear = function() {
+  _.each(this.views, function (view) {
+    view.clear();
+  });
+};
+
+pw_Collection.prototype.text = function(value) {
+  _.each(this.views, function (view) {
+    view.text(value);
+  });
+};
+
+pw_Collection.prototype.html = function(value) {
+  _.each(this.views, function (view) {
+    view.html(value);
+  });
+};
 
 pw_Collection.prototype.append = function (data) {
   var last = this.views[this.views.length - 1];
@@ -99,7 +115,17 @@ pw_Collection.prototype.prop = function (name) {
   );
 };
 
-//TODO component, with
+pw_Collection.prototype.component = function (name) {
+  return pw.collection.init(
+    _.reduce(this.views, [], function (views, view) {
+      return views.concat(view.component(name));
+    })
+  );
+};
+
+pw_Collection.prototype.with = function (cb) {
+  pw.node.with(this.views, cb);
+};
 
 pw_Collection.prototype.for = function(data, fn) {
   if(!(data instanceof Array)) data = [data];

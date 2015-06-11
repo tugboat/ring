@@ -374,10 +374,40 @@ pw.node.after = function (node, newNode) {
   node.parentNode.insertBefore(newNode, this.nextSibling);
 }
 
+pw.node.replace = function (node, newNode) {
+  node.parentNode.replaceChild(newNode, node);
+};
+
+pw.node.append = function (node, newNode) {
+  node.appendChild(newNode);
+}
+
+pw.node.prepend = function (node, newNode) {
+  node.insertBefore(newNode, node.firstChild);
+}
+
 pw.node.remove = function (node) {
   node.parentNode.removeChild(node);
 };
 
 pw.node.text = function (node, value) {
   node.innerText = value;
+};
+
+pw.node.html = function (node, value) {
+  node.innerHTML = value;
+};
+
+pw.node.clear = function (node) {
+  while (node.firstChild) {
+    pw.node.remove(node.firstChild);
+  }
+};
+
+pw.node.title = function (node, value) {
+  var titleNode = node.getElementsByTagName('title')[0];
+
+  if (titleNode) {
+    pw.node.text(titleNode, value);
+  }
 };

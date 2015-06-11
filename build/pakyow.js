@@ -405,12 +405,42 @@ pw.node.after = function (node, newNode) {
   node.parentNode.insertBefore(newNode, this.nextSibling);
 }
 
+pw.node.replace = function (node, newNode) {
+  node.parentNode.replaceChild(newNode, node);
+};
+
+pw.node.append = function (node, newNode) {
+  node.appendChild(newNode);
+}
+
+pw.node.prepend = function (node, newNode) {
+  node.insertBefore(newNode, node.firstChild);
+}
+
 pw.node.remove = function (node) {
   node.parentNode.removeChild(node);
 };
 
 pw.node.text = function (node, value) {
   node.innerText = value;
+};
+
+pw.node.html = function (node, value) {
+  node.innerHTML = value;
+};
+
+pw.node.clear = function (node) {
+  while (node.firstChild) {
+    pw.node.remove(node.firstChild);
+  }
+};
+
+pw.node.title = function (node, value) {
+  var titleNode = node.getElementsByTagName('title')[0];
+
+  if (titleNode) {
+    pw.node.text(titleNode, value);
+  }
 };
 pw.attrs = {};
 
@@ -668,19 +698,51 @@ pw_View.prototype.remove = function () {
   pw.node.remove(this.node);
 };
 
-//TODO clear, title
+pw_View.prototype.clear = function () {
+  pw.node.clear(this.node);
+};
+
+pw_View.prototype.title = function (value) {
+  pw.node.title(this.node, value);
+};
 
 pw_View.prototype.text = function (value) {
   pw.node.text(node, value);
 };
 
-//TODO html, append, prepend, after, before, replace
+pw_View.prototype.html = function (value) {
+  pw.node.html(node, value);
+};
+
+pw_View.prototype.after = function (view) {
+  pw.node.after(this.node, view.node);
+}
+
+pw_View.prototype.before = function (view) {
+  pw.node.before(this.node, view.node);
+}
+
+pw_View.prototype.replace = function (view) {
+  pw.node.replace(this.node, view.node);
+}
+
+pw_View.prototype.append = function (view) {
+  pw.node.append(this.node, view.node);
+}
+
+pw_View.prototype.prepend = function (view) {
+  pw.node.prepend(this.node, view.node);
+}
 
 pw_View.prototype.attrs = function () {
   return pw.attrs.init(this);
 };
 
-//TODO scope
+pw_View.prototype.scope = function (name) {
+  return _.map(pw.node.byAttr(this.node, 'data-scope', name), function (node) {
+    return pw.view.init(node);
+  });
+};
 
 pw_View.prototype.prop = function (name) {
   return _.map(pw.node.byAttr(this.node, 'data-prop', name), function (node) {
@@ -688,13 +750,35 @@ pw_View.prototype.prop = function (name) {
   });
 };
 
-//TODO component, with, match, for, repeat
-
-pw_View.prototype.bind = function (data) {
-  pw.node.bind(data, this.node);
+pw_View.prototype.component = function (name) {
+  return _.map(pw.node.byAttr(this.node, 'data-ui', name), function (node) {
+    return pw.view.init(node);
+  });
 };
 
-//TODO apply
+pw_View.prototype.with = function (cb) {
+  pw.node.with(this.node, cb);
+};
+
+pw_View.prototype.match = function (data) {
+  pw.node.match(this.node, data);
+};
+
+pw_View.prototype.for = function (data, cb) {
+  pw.node.for(this.node, data, cb);
+};
+
+pw_View.prototype.repeat = function (data, cb) {
+  pw.node.repeat(this.node, data, cb);
+};
+
+pw_View.prototype.bind = function (data, cb) {
+  pw.node.bind(data, this.node, cb);
+};
+
+pw_View.prototype.apply = function (data, cb) {
+  pw.node.apply(data, this.node, cb);
+};
 pw.collection = {};
 
 pw.collection.init = function (views, selector) {
@@ -760,7 +844,23 @@ pw_Collection.prototype.remove = function() {
   });
 };
 
-//TODO clear, text, html
+pw_Collection.prototype.clear = function() {
+  _.each(this.views, function (view) {
+    view.clear();
+  });
+};
+
+pw_Collection.prototype.text = function(value) {
+  _.each(this.views, function (view) {
+    view.text(value);
+  });
+};
+
+pw_Collection.prototype.html = function(value) {
+  _.each(this.views, function (view) {
+    view.html(value);
+  });
+};
 
 pw_Collection.prototype.append = function (data) {
   var last = this.views[this.views.length - 1];
@@ -796,7 +896,17 @@ pw_Collection.prototype.prop = function (name) {
   );
 };
 
-//TODO component, with
+pw_Collection.prototype.component = function (name) {
+  return pw.collection.init(
+    _.reduce(this.views, [], function (views, view) {
+      return views.concat(view.component(name));
+    })
+  );
+};
+
+pw_Collection.prototype.with = function (cb) {
+  pw.node.with(this.views, cb);
+};
 
 pw_Collection.prototype.for = function(data, fn) {
   if(!(data instanceof Array)) data = [data];

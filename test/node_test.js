@@ -215,6 +215,18 @@ describe('pw.node', function () {
     it('inserts the node after the node');
   });
 
+  describe('replace', function () {
+    it('replaces the node with the node');
+  });
+
+  describe('append', function () {
+    it('appends the node to the node');
+  });
+
+  describe('prepend', function () {
+    it('prepends the node to the node');
+  });
+
   describe('remove', function () {
     it('removes the node');
   });
