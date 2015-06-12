@@ -12,8 +12,8 @@ pw.init.register(function () {
 
 pw.component = {};
 
-pw.component.init = function () {
-  return new pw_Component();
+pw.component.init = function (view, config) {
+  return new pw_Component(view, config);
 };
 
 // stores component functions by name
@@ -33,37 +33,37 @@ pw.component.findAndInit = function (node) {
     var name = uiNode.getAttribute('data-ui');
     var cfn = components[name];
 
-    if (cfn) {
-      var channel = uiNode.getAttribute('data-channel');
-      var config = uiNode.getAttribute('data-config');
-      var view = pw.view.init(uiNode);
+    var channel = uiNode.getAttribute('data-channel');
+    var config = uiNode.getAttribute('data-config');
+    var view = pw.view.init(uiNode);
 
+    if (cfn) {
       var component = new cfn(view, pw.component.buildConfigObject(config));
       component.config = config;
       component.view = view;
 
       pw.component.registerForChannel(component, channel);
     } else {
-      console.log('component not found: ' + name);
+      var component = new pw.component.init(view, pw.component.buildConfigObject(config));
+      pw.component.registerForChannel(component, channel);
     }
   });
 }
 
 pw.component.push = function (packet) {
   _.each(channelComponents[packet.channel], function (component) {
-    component.message(packet.channel, packet.payload);
+    if (packet.payload.instruct) {
+      component.instruct(packet.channel, packet.payload.instruct);
+    } else {
+      component.message(packet.channel, packet.payload);
+    }
   });
 }
 
 pw.component.register = function (name, fn) {
-  fn.prototype.listen = function (channel) {
-    pw.component.registerForChannel(this, channel);
-  }
-
-  fn.prototype.broadcast = function (payload, channel) {
-    pw.component.push({ payload: payload, channel: channel });
-  }
-
+  fn.prototype.listen    = pw_Component.prototype.listen;
+  fn.prototype.broadcast = pw_Component.prototype.broadcast;
+  fn.prototype.instruct  = pw_Component.prototype.instruct;
   components[name] = fn;
 }
 
@@ -94,5 +94,27 @@ pw.component.registerForChannel = function (component, channel) {
   pw_Component makes it possible to build custom controls.
 */
 
-var pw_Component = function (cfn, node) {
+var pw_Component = function (view, config) {
+  this.view = view;
+  this.config = config;
 }
+
+pw_Component.prototype.listen = function (channel) {
+  pw.component.registerForChannel(this, channel);
+};
+
+pw_Component.prototype.broadcast = function (payload, channel) {
+  pw.component.push({ payload: payload, channel: channel });
+};
+
+pw_Component.prototype.instruct = function (channel, instructions) {
+  var packet = {
+    payload: instructions,
+    channel: channel
+  };
+
+  pw.instruct.process(pw.collection.init(this.view), packet, window.socket);
+};
+
+pw_Component.prototype.message = function (channel, payload) {
+};

@@ -88,12 +88,14 @@ pw_Collection.prototype.html = function(value) {
 };
 
 pw_Collection.prototype.append = function (data) {
+  if(!(data instanceof Array)) data = [data];
   var last = this.views[this.views.length - 1];
   this.views.push(last.append(data));
   return last;
 };
 
 pw_Collection.prototype.prepend = function(data) {
+  if(!(data instanceof Array)) data = [data];
   var firstView = this.views[0];
 
   var prependedViews = _.map(data, function (datum) {
@@ -107,25 +109,25 @@ pw_Collection.prototype.prepend = function(data) {
 
 pw_Collection.prototype.scope = function (name) {
   return pw.collection.init(
-    _.reduce(this.views, [], function (views, view) {
+    _.reduce(this.views, function (views, view) {
       return views.concat(view.scope(name));
-    })
+    }, [])
   );
 };
 
 pw_Collection.prototype.prop = function (name) {
   return pw.collection.init(
-    _.reduce(this.views, [], function (views, view) {
+    _.reduce(this.views, function (views, view) {
       return views.concat(view.prop(name));
-    })
+    }, [])
   );
 };
 
 pw_Collection.prototype.component = function (name) {
   return pw.collection.init(
-    _.reduce(this.views, [], function (views, view) {
+    _.reduce(this.views, function (views, view) {
       return views.concat(view.component(name));
-    })
+    }, [])
   );
 };
 

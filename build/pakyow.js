@@ -733,12 +733,31 @@ pw_View.prototype.replace = function (view) {
   pw.node.replace(this.node, view.node);
 }
 
-pw_View.prototype.append = function (view) {
-  pw.node.append(this.node, view.node);
+pw_View.prototype.append = function (view_or_data) {
+  if (typeof view_or_data === Node) {
+    pw.node.append(this.node, view_or_data.node);
+    return view_or_data;
+  } else {
+    console.log('append as an operation');
+  }
 }
 
-pw_View.prototype.prepend = function (view) {
-  pw.node.prepend(this.node, view.node);
+pw_View.prototype.prepend = function (view_or_data) {
+  if (view_or_data instanceof pw_View) {
+    pw.node.prepend(this.node, view_or_data.node);
+    return view_or_data;
+  } else {
+    //TODO really want to be able to fetch the view here, but
+    // we don't have a channel to fetch by; perhaps fetch by
+    // the component name + scope? I dunno.
+    //
+    // consider fetching by channel, or by component + scope
+    // (could just look up the path for this info)
+    var prependable = pw.view.init(pw.node.clone(this.node));
+    prependable.bind(view_or_data);
+    this.before(prependable);
+    return prependable;
+  }
 }
 
 pw_View.prototype.attrs = function () {
@@ -876,12 +895,14 @@ pw_Collection.prototype.html = function(value) {
 };
 
 pw_Collection.prototype.append = function (data) {
+  if(!(data instanceof Array)) data = [data];
   var last = this.views[this.views.length - 1];
   this.views.push(last.append(data));
   return last;
 };
 
 pw_Collection.prototype.prepend = function(data) {
+  if(!(data instanceof Array)) data = [data];
   var firstView = this.views[0];
 
   var prependedViews = _.map(data, function (datum) {
@@ -895,25 +916,25 @@ pw_Collection.prototype.prepend = function(data) {
 
 pw_Collection.prototype.scope = function (name) {
   return pw.collection.init(
-    _.reduce(this.views, [], function (views, view) {
+    _.reduce(this.views, function (views, view) {
       return views.concat(view.scope(name));
-    })
+    }, [])
   );
 };
 
 pw_Collection.prototype.prop = function (name) {
   return pw.collection.init(
-    _.reduce(this.views, [], function (views, view) {
+    _.reduce(this.views, function (views, view) {
       return views.concat(view.prop(name));
-    })
+    }, [])
   );
 };
 
 pw_Collection.prototype.component = function (name) {
   return pw.collection.init(
-    _.reduce(this.views, [], function (views, view) {
+    _.reduce(this.views, function (views, view) {
       return views.concat(view.component(name));
-    })
+    }, [])
   );
 };
 
@@ -1000,8 +1021,8 @@ pw.init.register(function () {
 
 pw.component = {};
 
-pw.component.init = function () {
-  return new pw_Component();
+pw.component.init = function (view, config) {
+  return new pw_Component(view, config);
 };
 
 // stores component functions by name
@@ -1021,37 +1042,37 @@ pw.component.findAndInit = function (node) {
     var name = uiNode.getAttribute('data-ui');
     var cfn = components[name];
 
-    if (cfn) {
-      var channel = uiNode.getAttribute('data-channel');
-      var config = uiNode.getAttribute('data-config');
-      var view = pw.view.init(uiNode);
+    var channel = uiNode.getAttribute('data-channel');
+    var config = uiNode.getAttribute('data-config');
+    var view = pw.view.init(uiNode);
 
+    if (cfn) {
       var component = new cfn(view, pw.component.buildConfigObject(config));
       component.config = config;
       component.view = view;
 
       pw.component.registerForChannel(component, channel);
     } else {
-      console.log('component not found: ' + name);
+      var component = new pw.component.init(view, pw.component.buildConfigObject(config));
+      pw.component.registerForChannel(component, channel);
     }
   });
 }
 
 pw.component.push = function (packet) {
   _.each(channelComponents[packet.channel], function (component) {
-    component.message(packet.channel, packet.payload);
+    if (packet.payload.instruct) {
+      component.instruct(packet.channel, packet.payload.instruct);
+    } else {
+      component.message(packet.channel, packet.payload);
+    }
   });
 }
 
 pw.component.register = function (name, fn) {
-  fn.prototype.listen = function (channel) {
-    pw.component.registerForChannel(this, channel);
-  }
-
-  fn.prototype.broadcast = function (payload, channel) {
-    pw.component.push({ payload: payload, channel: channel });
-  }
-
+  fn.prototype.listen    = pw_Component.prototype.listen;
+  fn.prototype.broadcast = pw_Component.prototype.broadcast;
+  fn.prototype.instruct  = pw_Component.prototype.instruct;
   components[name] = fn;
 }
 
@@ -1082,8 +1103,30 @@ pw.component.registerForChannel = function (component, channel) {
   pw_Component makes it possible to build custom controls.
 */
 
-var pw_Component = function (cfn, node) {
+var pw_Component = function (view, config) {
+  this.view = view;
+  this.config = config;
 }
+
+pw_Component.prototype.listen = function (channel) {
+  pw.component.registerForChannel(this, channel);
+};
+
+pw_Component.prototype.broadcast = function (payload, channel) {
+  pw.component.push({ payload: payload, channel: channel });
+};
+
+pw_Component.prototype.instruct = function (channel, instructions) {
+  var packet = {
+    payload: instructions,
+    channel: channel
+  };
+
+  pw.instruct.process(pw.collection.init(this.view), packet, window.socket);
+};
+
+pw_Component.prototype.message = function (channel, payload) {
+};
 /*
   Socket init.
 */
