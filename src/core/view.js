@@ -70,31 +70,49 @@ pw_View.prototype.replace = function (view) {
 }
 
 pw_View.prototype.append = function (view_or_data) {
-  if (typeof view_or_data === Node) {
+  if (view_or_data instanceof pw_View) {
     pw.node.append(this.node, view_or_data.node);
-    return view_or_data;
   } else {
-    console.log('append as an operation');
+    this.fetchAndTransformView(function (view) {
+      view.bind(view_or_data);
+      this.after(view);
+    });
   }
-}
+};
 
 pw_View.prototype.prepend = function (view_or_data) {
   if (view_or_data instanceof pw_View) {
     pw.node.prepend(this.node, view_or_data.node);
-    return view_or_data;
   } else {
-    //TODO really want to be able to fetch the view here, but
-    // we don't have a channel to fetch by; perhaps fetch by
-    // the component name + scope? I dunno.
-    //
-    // consider fetching by channel, OR by component + scope
-    // (could just look up the path for this info)
-    var prependable = pw.view.init(pw.node.clone(this.node));
-    prependable.bind(view_or_data);
-    this.before(prependable);
-    return prependable;
+    this.fetchAndTransformView(function (view) {
+      view.bind(view_or_data);
+      this.before(view);
+    });
   }
-}
+};
+
+pw_View.prototype.insert = function (view_or_data, atIndex) {
+  if (view_or_data instanceof pw_View) {
+    pw.node.insert(this.node, view_or_data.node, atIndex);
+  } else {
+    this.fetchAndTransformView(function (view) {
+      view.bind(view_or_data);
+      this.insert(view, atIndex);
+    });
+  }
+};
+
+pw_View.prototype.fetchAndTransformView = function (transformFn) {
+  var that = this;
+  //TODO build lookup
+  socket.fetchView({ component: 'chat', scope: 'message' }, function (view) {
+    transformFn.call(that, view);
+
+    if (that.versionName() == 'empty') {
+      that.remove();
+    }
+  });
+};
 
 pw_View.prototype.attrs = function () {
   return pw.attrs.init(this);
@@ -140,4 +158,8 @@ pw_View.prototype.bind = function (data, cb) {
 
 pw_View.prototype.apply = function (data, cb) {
   pw.node.apply(data, this.node, cb);
+};
+
+pw_View.prototype.versionName = function () {
+  return pw.node.versionName(this.node);
 };

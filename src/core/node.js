@@ -147,6 +147,13 @@ pw.node.propName = function (node) {
   return pw.node.propName(node.parentNode);
 }
 
+// returns the name of the version for node
+pw.node.versionName = function (node) {
+  if (node.hasAttribute('data-version')) {
+    return node.getAttribute('data-version');
+  }
+}
+
 // creates a context in which view manipulations can occur
 pw.node.with = function(node, cb) {
   cb.call(node);
