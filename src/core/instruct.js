@@ -30,7 +30,7 @@ pw.instruct.perform = function (collection, instructions) {
     if (collection[method]) {
       if (method == 'with' || method == 'for' || method == 'bind' || method == 'repeat' || method == 'apply') {
         collection[method].call(collection, value, function (datum) {
-          pw.instruct.perform(this, nested);
+          pw.instruct.perform(this, nested[value.indexOf(datum)]);
         });
         return;
       } else if (method == 'attrs') {
