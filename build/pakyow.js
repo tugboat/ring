@@ -178,6 +178,13 @@ pw.node.propName = function (node) {
   return pw.node.propName(node.parentNode);
 }
 
+// returns the name of the version for node
+pw.node.versionName = function (node) {
+  if (node.hasAttribute('data-version')) {
+    return node.getAttribute('data-version');
+  }
+}
+
 // creates a context in which view manipulations can occur
 pw.node.with = function(node, cb) {
   cb.call(node);
@@ -734,52 +741,76 @@ pw_View.prototype.replace = function (view) {
 }
 
 pw_View.prototype.append = function (view_or_data) {
-  if (typeof view_or_data === Node) {
+  if (view_or_data instanceof pw_View) {
     pw.node.append(this.node, view_or_data.node);
-    return view_or_data;
   } else {
-    console.log('append as an operation');
+    this.fetchAndTransformView(function (view) {
+      view.bind(view_or_data);
+      this.after(view);
+    });
   }
-}
+};
 
 pw_View.prototype.prepend = function (view_or_data) {
   if (view_or_data instanceof pw_View) {
     pw.node.prepend(this.node, view_or_data.node);
-    return view_or_data;
   } else {
-    //TODO really want to be able to fetch the view here, but
-    // we don't have a channel to fetch by; perhaps fetch by
-    // the component name + scope? I dunno.
-    //
-    // consider fetching by channel, or by component + scope
-    // (could just look up the path for this info)
-    var prependable = pw.view.init(pw.node.clone(this.node));
-    prependable.bind(view_or_data);
-    this.before(prependable);
-    return prependable;
+    this.fetchAndTransformView(function (view) {
+      view.bind(view_or_data);
+      this.before(view);
+    });
   }
-}
+};
+
+pw_View.prototype.insert = function (view_or_data, atIndex) {
+  if (view_or_data instanceof pw_View) {
+    pw.node.insert(this.node, view_or_data.node, atIndex);
+  } else {
+    this.fetchAndTransformView(function (view) {
+      view.bind(view_or_data);
+      this.insert(view, atIndex);
+    });
+  }
+};
+
+pw_View.prototype.fetchAndTransformView = function (transformFn) {
+  var that = this;
+  //TODO build lookup
+  socket.fetchView({ component: 'chat', scope: 'message' }, function (view) {
+    transformFn.call(that, view);
+
+    if (that.versionName() == 'empty') {
+      that.remove();
+    }
+  });
+};
 
 pw_View.prototype.attrs = function () {
   return pw.attrs.init(this);
 };
 
 pw_View.prototype.scope = function (name) {
-  return _.map(pw.node.byAttr(this.node, 'data-scope', name), function (node) {
-    return pw.view.init(node);
-  });
+  return pw.collection.init(
+    _.reduce(pw.node.byAttr(this.node, 'data-scope', name), function (views, node) {
+      return views.concat(pw.view.init(node));
+    }, [])
+  );
 };
 
 pw_View.prototype.prop = function (name) {
-  return _.map(pw.node.byAttr(this.node, 'data-prop', name), function (node) {
-    return pw.view.init(node);
-  });
+  return pw.collection.init(
+    _.reduce(pw.node.byAttr(this.node, 'data-prop', name), function (views, node) {
+      return views.concat(pw.view.init(node));
+    }, [])
+  );
 };
 
 pw_View.prototype.component = function (name) {
-  return _.map(pw.node.byAttr(this.node, 'data-ui', name), function (node) {
-    return pw.view.init(node);
-  });
+  return pw.collection.init(
+    _.reduce(pw.node.byAttr(this.node, 'data-ui', name), function (views, node) {
+      return views.concat(pw.view.init(node));
+    }, [])
+  );
 };
 
 pw_View.prototype.with = function (cb) {
@@ -804,6 +835,10 @@ pw_View.prototype.bind = function (data, cb) {
 
 pw_View.prototype.apply = function (data, cb) {
   pw.node.apply(data, this.node, cb);
+};
+
+pw_View.prototype.versionName = function () {
+  return pw.node.versionName(this.node);
 };
 pw.collection = {};
 
@@ -914,6 +949,8 @@ pw_Collection.prototype.prepend = function(data) {
   return pw.collection.init(prependedViews);
 };
 
+//TODO insert
+
 pw_Collection.prototype.scope = function (name) {
   return pw.collection.init(
     _.reduce(this.views, function (views, view) {
@@ -969,7 +1006,7 @@ pw_Collection.prototype.match = function (data, fn) {
       var channel = this.views[0].node.getAttribute('data-channel');
       var that = this;
 
-      window.socket.fetchView(channel, function (view) {
+      window.socket.fetchView({ channel: channel }, function (view) {
         _.each(data, function (datum) {
           if (!_.find(that.views, function (view) { return parseInt(view.node.getAttribute('data-id')) === datum.id })) {
             that.addView(view.clone());
@@ -1269,12 +1306,12 @@ pw_Socket.prototype.reconnect = function () {
   }, self.socketWait);
 };
 
-pw_Socket.prototype.fetchView = function (channel, cb) {
+pw_Socket.prototype.fetchView = function (lookup, cb) {
   var uri = window.location.pathname + window.location.search;
 
   this.send({
     action: 'fetch-view',
-    channel: channel,
+    lookup: lookup,
     uri: uri
   }, function (res) {
     var e = document.createElement("div");
@@ -1297,7 +1334,7 @@ pw.instruct.process = function (collection, packet, socket) {
 };
 
 pw.instruct.fetchView = function (packet, socket, node) {
-  socket.fetchView(packet.channel, function (view) {
+  socket.fetchView({ channel: packet.channel }, function (view) {
     var parent = node.parentNode;
     parent.replaceChild(view.node, node);
 
@@ -1318,7 +1355,7 @@ pw.instruct.perform = function (collection, instructions) {
     if (collection[method]) {
       if (method == 'with' || method == 'for' || method == 'bind' || method == 'repeat' || method == 'apply') {
         collection[method].call(collection, value, function (datum) {
-          pw.instruct.perform(this, nested);
+          pw.instruct.perform(this, nested[value.indexOf(datum)]);
         });
         return;
       } else if (method == 'attrs') {
