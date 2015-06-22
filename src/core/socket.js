@@ -140,12 +140,12 @@ pw_Socket.prototype.reconnect = function () {
   }, self.socketWait);
 };
 
-pw_Socket.prototype.fetchView = function (channel, cb) {
+pw_Socket.prototype.fetchView = function (lookup, cb) {
   var uri = window.location.pathname + window.location.search;
 
   this.send({
     action: 'fetch-view',
-    channel: channel,
+    lookup: lookup,
     uri: uri
   }, function (res) {
     var e = document.createElement("div");

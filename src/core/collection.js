@@ -107,6 +107,8 @@ pw_Collection.prototype.prepend = function(data) {
   return pw.collection.init(prependedViews);
 };
 
+//TODO insert
+
 pw_Collection.prototype.scope = function (name) {
   return pw.collection.init(
     _.reduce(this.views, function (views, view) {
@@ -162,7 +164,7 @@ pw_Collection.prototype.match = function (data, fn) {
       var channel = this.views[0].node.getAttribute('data-channel');
       var that = this;
 
-      window.socket.fetchView(channel, function (view) {
+      window.socket.fetchView({ channel: channel }, function (view) {
         _.each(data, function (datum) {
           if (!_.find(that.views, function (view) { return parseInt(view.node.getAttribute('data-id')) === datum.id })) {
             that.addView(view.clone());

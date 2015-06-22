@@ -9,7 +9,7 @@ pw.instruct.process = function (collection, packet, socket) {
 };
 
 pw.instruct.fetchView = function (packet, socket, node) {
-  socket.fetchView(packet.channel, function (view) {
+  socket.fetchView({ channel: packet.channel }, function (view) {
     var parent = node.parentNode;
     parent.replaceChild(view.node, node);
 
