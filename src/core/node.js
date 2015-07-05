@@ -293,7 +293,11 @@ pw.node.bindValueToNode = function (value, doc) {
       doc.checked = false;
     }
   } else {
-    pw.node.isSelfClosingTag(doc) ? doc.value = value : doc.textContent = value;
+    if (pw.node.isSelfClosingTag(doc)) {
+      doc.value = value;
+    } else {
+      doc.innerHTML = value;
+    }
   }
 }
 
