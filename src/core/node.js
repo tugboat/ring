@@ -262,7 +262,8 @@ pw.node.bindDataToScope = function (data, scope, node) {
     }
 
     if(typeof v === 'object') {
-      pw.node.bindAttributesToNode(v, p['doc']);
+      pw.node.bindValueToNode(v['__content'], p['doc']);
+      pw.node.bindAttributesToNode(v['__attrs'], p['doc']);
     } else {
       pw.node.bindValueToNode(v, p['doc']);
     }
@@ -270,15 +271,25 @@ pw.node.bindDataToScope = function (data, scope, node) {
 }
 
 pw.node.bindAttributesToNode = function (attrs, doc) {
+  var pwAttrs = pw.attrs.init(pw.view.init(doc));
+
   for(var attr in attrs) {
     var value = attrs[attr];
-    if(attr === 'content') {
-      pw.node.bindValueToNode(value, doc);
-      continue;
+    if(_.isFunction(value)) {
+      value = value.call(doc.getAttribute(attr));
     }
 
-    if(_.isFunction(value)) value = value.call(doc.getAttribute(attr));
-    !value ? pw.node.removeAttr(doc, attr) : pw.node.setAttr(doc, attr, value);
+    if (value) {
+      if (value instanceof Array) {
+        _.each(value, function (attrInstruct) {
+          pwAttrs[attrInstruct[0]](attr, attrInstruct[1]);
+        });
+      } else {
+        pwAttrs.set(attr, value);
+      }
+    } else {
+      pwAttrs.remove(attr);
+    }
   }
 }
 
@@ -345,7 +356,15 @@ pw.node.byAttr = function (node, attr, compareValue) {
 }
 
 pw.node.setAttr = function (node, attr, value) {
-  node.setAttribute(attr, value);
+  if (attr === 'class') {
+    node.setAttribute(attr, value.join(' '));
+  } else if (attr === 'style') {
+    _.each(_.pairs(value), function (kv) {
+      node.style[kv[0]] = kv[1];
+    });
+  } else {
+    node.setAttribute(attr, value);
+  }
 }
 
 pw.node.removeAttr = function (node, attr) {

@@ -39,6 +39,12 @@ pw_Attrs.prototype.set = function (attr, value) {
   });
 };
 
+pw_Attrs.prototype.remove = function (attr) {
+  _.each(this.views, function (view) {
+    pw.node.removeAttr(view.node, attr);
+  });
+};
+
 pw_Attrs.prototype.ensure = function (attr, value) {
   _.each(this.views, function (view) {
     var currentValue = this.findValue(view, attr);
@@ -84,3 +90,19 @@ pw_Attrs.prototype.deny = function (attr, value) {
     }
   }, this);
 };
+
+pw_Attrs.prototype.insert = function (attr, value) {
+  _.each(this.views, function (view) {
+    var currentValue = this.findValue(view, attr);
+
+    if (attr === 'class') {
+      currentValue.add(value);
+    } else if (attr === 'style') {
+      // no-op
+    } else if (this.findType(attr) === 'bool') {
+      // no-op
+    } else { // just a text attr
+      pw.node.setAttr(view.node, attr, currentValue + value);
+    }
+  }, this);
+}
