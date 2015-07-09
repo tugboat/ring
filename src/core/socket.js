@@ -112,7 +112,7 @@ pw_Socket.prototype.message = function (packet) {
     return;
   }
 
-  var nodes = document.querySelectorAll(selector);
+  var nodes = Array.prototype.slice.call(document.querySelectorAll(selector));
 
   if (nodes.length === 0) {
     //TODO decide how to handle this condition; there are times where this

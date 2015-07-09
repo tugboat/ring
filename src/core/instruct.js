@@ -14,7 +14,7 @@ pw.instruct.fetchView = function (packet, socket, node) {
     parent.replaceChild(view.node, node);
 
     var selector = '*[data-channel="' + packet.channel + '"]';
-    var nodes = parent.querySelectorAll(selector);
+    var nodes = Array.prototype.slice.call(parent.querySelectorAll(selector));
     pw.instruct.perform(pw.collection.fromNodes(nodes, selector), packet.payload);
   });
 };
@@ -22,7 +22,7 @@ pw.instruct.fetchView = function (packet, socket, node) {
 pw.instruct.perform = function (collection, instructions) {
   var self = this;
 
-  _.each(instructions, function (instruction, i) {
+  (instructions || []).forEach(function (instruction, i) {
     var method = instruction[0];
     var value = instruction[1];
     var nested = instruction[2];
@@ -53,7 +53,7 @@ pw.instruct.perform = function (collection, instructions) {
 };
 
 pw.instruct.performAttr = function (context, attrInstructions) {
-  _.each(attrInstructions, function (attrInstruct) {
+  attrInstructions.forEach(function (attrInstruct) {
     var attr = attrInstruct[0];
     var value = attrInstruct[1];
     var nested = attrInstruct[2];

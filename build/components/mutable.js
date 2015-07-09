@@ -1,13 +1,13 @@
 pw.component.register('mutable', function (view, config) {
   var that = this;
   this.mutate = function (target) {
-    _.each(this.state.diff(target), function (diff) {
+    this.state.diff(target).forEach(function (diff) {
       //TODO determine where this cleanup should happen and if
       // we even need to track `node` to begin with
       delete diff.node;
 
       var input = {};
-      var datum = _.clone(diff);
+      var datum = diff.slice(0);
       delete datum.guid;
       delete datum.scope;
       delete datum.id;

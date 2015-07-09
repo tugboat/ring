@@ -6,7 +6,7 @@ pw.init.register = function (fn) {
 };
 
 document.addEventListener("DOMContentLoaded", function(event) {
-  _.each(initFns, function (fn) {
+  initFns.forEach(function (fn) {
     fn();
   });
 });

@@ -34,7 +34,7 @@ pw_Attrs.prototype.findValue = function (view, attr) {
 };
 
 pw_Attrs.prototype.set = function (attr, value) {
-  _.each(this.views, function (view) {
+  this.views.forEach(function (view) {
     pw.node.setAttr(view.node, attr, value);
   });
 };
@@ -46,7 +46,7 @@ pw_Attrs.prototype.remove = function (attr) {
 };
 
 pw_Attrs.prototype.ensure = function (attr, value) {
-  _.each(this.views, function (view) {
+  this.views.forEach(function (view) {
     var currentValue = this.findValue(view, attr);
 
     if (attr === 'class') {
@@ -54,7 +54,7 @@ pw_Attrs.prototype.ensure = function (attr, value) {
         currentValue.add(value);
       }
     } else if (attr === 'style') {
-      _.each(_.pairs(value), function (kv) {
+      value.pairs().forEach(function (kv) {
         view.node.style[kv[0]] = kv[1];
       });
     } else if (this.findType(attr) === 'bool') {
@@ -71,14 +71,14 @@ pw_Attrs.prototype.ensure = function (attr, value) {
 };
 
 pw_Attrs.prototype.deny = function (attr, value) {
-  _.each(this.views, function (view) {
+  this.views.forEach(function (view) {
     var currentValue = this.findValue(view, attr);
     if (attr === 'class') {
       if (currentValue.contains(value)) {
         currentValue.remove(value);
       }
     } else if (attr === 'style') {
-      _.each(_.pairs(value), function (kv) {
+      value.pairs().forEach(function (kv) {
         view.node.style[kv[0]] = view.node.style[kv[0]].replace(kv[1], '');
       });
     } else if (this.findType(attr) === 'bool') {

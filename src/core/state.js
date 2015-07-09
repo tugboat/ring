@@ -48,7 +48,7 @@ var pw_State = function (node) {
 
 // diff the node and capture any changes
 pw_State.prototype.diff = function (node) {
-  return _.map(_.flatten(pw.state.build(pw.node.significant(pw.node.scope(node)))), function (nodeState) {
+  return pw.state.build(pw.node.significant(pw.node.scope(node))).flatten().map(function (nodeState) {
     var last = this.node(nodeState);
 
     var diffObj = {
@@ -73,9 +73,10 @@ pw_State.prototype.diff = function (node) {
 
 // update the current state (or state if passed) with diff
 pw_State.prototype.update = function (diff, state) {
-  _.each(_.filter(_.flatten(state || this.current), function (s) {
+  (state || this.current).flatten().filter(function (s) {
     return s.scope === diff.scope && s.id === diff.id;
-  }), function (s) {
+  }).forEach(function (s) {
+    //TODO use modern functions
     for (var key in diff) {
       if (key === 'guid') continue;
       if (s[key] !== diff[key]) {
@@ -94,11 +95,11 @@ pw_State.prototype.revert = function () {
 
 // rollback a diff by guid
 pw_State.prototype.rollback = function (guid) {
-  _.each(this.diffs, function (diff, i) {
+  this.diffs.forEach(function (diff, i) {
     if (diff.guid === guid) {
       // rebuild state by starting at initial and applying diffs before i
       var rbState = JSON.parse(JSON.stringify(this.initial));
-      _.each(this.diffs, function (aDiff) {
+      this.diffs.forEach(function (aDiff) {
         if (diff.guid === aDiff.guid) {
           return;
         }
@@ -107,7 +108,7 @@ pw_State.prototype.rollback = function (guid) {
       }, this);
 
       // apply diffs after i to get new current
-      _.each(_.rest(this.diffs, i + 1), function (aDiff) {
+      this.diffs.slice(i + 1).forEach(function (aDiff) {
         this.update(aDiff, rbState);
       }, this);
 
@@ -124,7 +125,7 @@ pw_State.prototype.rollback = function (guid) {
 
 // returns the current state for a node
 pw_State.prototype.node = function (nodeState) {
-  return _.filter(_.flatten(this.current), function (s) {
+  return this.current.flatten().filter(function (s) {
     return s.scope === nodeState.scope && s.id === nodeState.id;
   })[0];
 }

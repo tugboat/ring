@@ -1,22 +1,22 @@
 pw.node = {};
 
 // returns the value of the node
-pw.node.value = function (node) {
-  if (node.tagName === 'INPUT') {
-    if (node.type === 'checkbox') {
-      if (node.checked) {
-        return node.name ? node.name : true;
+pw.node.value = function (n) {
+  if (n.tagName === 'INPUT') {
+    if (n.type === 'checkbox') {
+      if (n.checked) {
+        return n.name ? n.name : true;
       } else {
         return false;
       }
     }
 
-    return node.value;
-  } else if (node.tagName === 'TEXTAREA') {
-    return node.value;
+    return n.value;
+  } else if (n.tagName === 'TEXTAREA') {
+    return n.value;
   }
 
-  return node.textContent.trim();
+  return n.textContent.trim();
 }
 
 /*
@@ -33,12 +33,13 @@ pw.node.value = function (node) {
   [ [ { node: ..., id: '1', scope: 'list' }, [ { node: ..., id: '1', scope: 'task' }, [ { node: ..., prop: 'body' } ] ] ] ]
 */
 
-pw.node.significant = function(node, arr) {
-  if(node === document) node = document.getElementsByTagName('body')[0];
+pw.node.significant = function(n, arr) {
+  if(n === document) n = document.getElementsByTagName('body')[0];
   if(arr === undefined) arr = [];
 
+  //TODO optimize this method
   var sigInfo, sigObj, sigArr, nextArr;
-  if(sigInfo = pw.node.isSignificant(node)) {
+  if(sigInfo = pw.node.isSignificant(n)) {
     sigObj = { node: sigInfo[0], type: sigInfo[1] };
     sigArr = [sigObj, []];
     arr.push(sigArr);
@@ -48,7 +49,7 @@ pw.node.significant = function(node, arr) {
     nextArr = arr;
   }
 
-  var children = node.children;
+  var children = n.children;
   for(var i = 0; i < children.length; i++) {
     pw.node.significant(children[i], nextArr);
   }
@@ -76,39 +77,36 @@ pw.node.isSignificant = function(node) {
   return false;
 }
 
-pw.node.mutable = function (node) {
-  return _.chain(pw.node.significant(node)).flatten().filter(function (node) {
-    return pw.node.isMutable(node.node);
-  }).map(function (node) {
-    return node.node;
+pw.node.mutable = function (n) {
+  pw.node.significant(n).flatten().filter(function (n) {
+    return pw.node.isMutable(n.node);
+  }).map(function (n) {
+    return n.node;
   });
 }
 
 // returns true if the node can mutate via interaction
-pw.node.isMutable = function(node) {
-  if (node.tagName === 'FORM') {
-    return true;
-  }
-
-  if (node.tagName === 'INPUT' && !node.disabled) {
+pw.node.isMutable = function(n) {
+  var t = n.tagName;
+  if (t === 'FORM' || (t === 'INPUT' && !n.disabled)) {
     return true;
   }
 
   return false;
 }
 
-// triggers evtName on node with data
-pw.node.trigger = function (evtName, node, data) {
-  var evt = document.createEvent('Event');
-  evt.initEvent(evtName, true, true);
-  node._evtData = data;
-  node.dispatchEvent(evt);
+// triggers event name on node with data
+pw.node.trigger = function (en, n, d) {
+  var e = document.createEvent('Event');
+  e.initEvent(en, true, true);
+  n._evtData = d;
+  n.dispatchEvent(e);
 }
 
 // replaces an event listener's callback for node by name
-pw.node.replaceEventListener = function (evtName, node, cb) {
-  node.removeEventListener(evtName);
-  node.addEventListener(evtName, cb);
+pw.node.replaceEventListener = function (en, n, cb) {
+  n.removeEventListener(en);
+  n.addEventListener(en, cb);
 }
 
 // finds and returns scope for node
@@ -160,17 +158,29 @@ pw.node.with = function(node, cb) {
 };
 
 pw.node.for = function(node, data, cb) {
-  if(!(node instanceof Array) && !pw.node.isNodeList(node)) node = [node];
-  if(!(data instanceof Array)) data = [data];
+  if(!(node instanceof Array)) {
+    node = [node];
+  } else if (pw.node.isNodeList(node)) {
+    node = Array.prototype.slice.call(node);
+  }
 
-  _.each(node, function (e, i) {
+  if(!(data instanceof Array)) {
+    data = [data];
+  }
+
+  node.forEach(function (e, i) {
     cb.call(e, data[i]);
   });
 };
 
 pw.node.match = function(node, data) {
-  if(!(node instanceof Array) && !pw.node.isNodeList(node)) node = [node];
-  if(!(data instanceof Array)) data = [data];
+  if(!(node instanceof Array) && !pw.node.isNodeList(node)) {
+    node = [node];
+  }
+
+  if(!(data instanceof Array)) {
+    data = [data];
+  }
 
   var collection = [];
   //TODO use each
@@ -179,7 +189,7 @@ pw.node.match = function(node, data) {
 
     // out of views, use the last one
     if(!view) {
-      view = _.last(node);
+      view = node[node.length - 1];
     }
 
     var dup = view.cloneNode(true);
@@ -275,13 +285,13 @@ pw.node.bindAttributesToNode = function (attrs, doc) {
 
   for(var attr in attrs) {
     var value = attrs[attr];
-    if(_.isFunction(value)) {
+    if(typeof value === 'function') {
       value = value.call(doc.getAttribute(attr));
     }
 
     if (value) {
       if (value instanceof Array) {
-        _.each(value, function (attrInstruct) {
+        value.forEach(function (attrInstruct) {
           pwAttrs[attrInstruct[0]](attr, attrInstruct[1]);
         });
       } else {
@@ -347,6 +357,7 @@ pw.node.isNodeList = function(nodes) {
 pw.node.byAttr = function (node, attr, compareValue) {
   var arr = [];
   var os = pw.node.all(node);
+  //TODO use each
   for(var i = 0; i < os.length; i++) {
     var o = os[i];
     var value = o.getAttribute(attr);
@@ -389,6 +400,7 @@ pw.node.all = function (node) {
   if(document !== node) arr.push(node);
 
   var os = node.getElementsByTagName('*');
+  //TODO use each
   for(var i = 0; i < os.length; i++) {
     arr.push(os[i]);
   }

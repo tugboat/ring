@@ -24,7 +24,7 @@ pw_View.prototype.applyState = function (stateArr, nodes) {
     nodes = pw.node.significant(this.node);
   }
 
-  _.each(stateArr, function (state, i) {
+  stateArr.forEach(function (state, i) {
     var node = nodes[i];
     pw.node.bind(state[0], node[0].node);
     this.applyState(state[1], node[1])
@@ -120,7 +120,7 @@ pw_View.prototype.attrs = function () {
 
 pw_View.prototype.scope = function (name) {
   return pw.collection.init(
-    _.reduce(pw.node.byAttr(this.node, 'data-scope', name), function (views, node) {
+    pw.node.byAttr(this.node, 'data-scope', name).reduce(function (views, node) {
       return views.concat(pw.view.init(node));
     }, [])
   );
@@ -128,7 +128,7 @@ pw_View.prototype.scope = function (name) {
 
 pw_View.prototype.prop = function (name) {
   return pw.collection.init(
-    _.reduce(pw.node.byAttr(this.node, 'data-prop', name), function (views, node) {
+    pw.node.byAttr(this.node, 'data-prop', name).reduce(function (views, node) {
       return views.concat(pw.view.init(node));
     }, [])
   );
@@ -136,7 +136,7 @@ pw_View.prototype.prop = function (name) {
 
 pw_View.prototype.component = function (name) {
   return pw.collection.init(
-    _.reduce(pw.node.byAttr(this.node, 'data-ui', name), function (views, node) {
+    pw.node.byAttr(this.node, 'data-ui', name).reduce(function (views, node) {
       return views.concat(pw.view.init(node));
     }, [])
   );

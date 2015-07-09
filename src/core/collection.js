@@ -11,7 +11,7 @@ pw.collection.init = function (view_or_views, selector) {
 };
 
 pw.collection.fromNodes = function (nodes, selector) {
-  return pw.collection.init(_.map(nodes, function (node) {
+  return pw.collection.init(nodes.map(function (node) {
     return pw.view.init(node);
   }), selector);
 }
@@ -24,16 +24,19 @@ var pw_Collection = function (views, selector) {
 pw_Collection.prototype.find = function (query) {
   var localSelector = this.selector;
 
-  _.each(_.pairs(query), function (pair) {
+  query.pairs().forEach(function (pair) {
     localSelector += '[data-' + pair[0] + '="' + pair[1] + '"]';
   });
 
-  return pw.collection.fromNodes(document.querySelectorAll(localSelector), localSelector);
+  return pw.collection.fromNodes(Array.prototype.slice.call(document.querySelectorAll(localSelector)), localSelector);
 };
 
 pw_Collection.prototype.removeView = function(view) {
   view.remove();
-  this.views = _.without(this.views, _.findWhere(this.views, view));
+
+  this.views = this.views.filter(function (v) {
+    return v !== view;
+  });
 };
 
 pw_Collection.prototype.addView = function(view) {
@@ -44,8 +47,8 @@ pw_Collection.prototype.addView = function(view) {
 
 //TODO look into a more efficient way of reordering nodes
 pw_Collection.prototype.order = function (orderedIds) {
-  _.each(orderedIds, function (id) {
-    var match = _.find(this.views, function (view) {
+  orderedIds.forEach(function (id) {
+    var match = this.views.find(function (view) {
       return parseInt(view.node.getAttribute('data-id')) === id;
     });
 
@@ -64,25 +67,25 @@ pw_Collection.prototype.attrs = function () {
 };
 
 pw_Collection.prototype.remove = function() {
-  _.each(this.views, function (view) {
+  this.views.forEach(function (view) {
     view.remove();
   });
 };
 
 pw_Collection.prototype.clear = function() {
-  _.each(this.views, function (view) {
+  this.views.forEach(function (view) {
     view.clear();
   });
 };
 
 pw_Collection.prototype.text = function(value) {
-  _.each(this.views, function (view) {
+  this.views.forEach(function (view) {
     view.text(value);
   });
 };
 
 pw_Collection.prototype.html = function(value) {
-  _.each(this.views, function (view) {
+  this.views.forEach(function (view) {
     view.html(value);
   });
 };
@@ -98,7 +101,7 @@ pw_Collection.prototype.prepend = function(data) {
   if(!(data instanceof Array)) data = [data];
   var firstView = this.views[0];
 
-  var prependedViews = _.map(data, function (datum) {
+  var prependedViews = data.map(function (datum) {
     var view = firstView.prepend(datum);
     this.views.push(view);
     return view;
@@ -111,7 +114,7 @@ pw_Collection.prototype.prepend = function(data) {
 
 pw_Collection.prototype.scope = function (name) {
   return pw.collection.init(
-    _.reduce(this.views, function (views, view) {
+    this.views.reduce(function (views, view) {
       return views.concat(view.scope(name));
     }, [])
   );
@@ -119,7 +122,7 @@ pw_Collection.prototype.scope = function (name) {
 
 pw_Collection.prototype.prop = function (name) {
   return pw.collection.init(
-    _.reduce(this.views, function (views, view) {
+    this.views.reduce(function (views, view) {
       return views.concat(view.prop(name));
     }, [])
   );
@@ -127,7 +130,7 @@ pw_Collection.prototype.prop = function (name) {
 
 pw_Collection.prototype.component = function (name) {
   return pw.collection.init(
-    _.reduce(this.views, function (views, view) {
+    this.views.reduce(function (views, view) {
       return views.concat(view.component(name));
     }, [])
   );
@@ -140,7 +143,7 @@ pw_Collection.prototype.with = function (cb) {
 pw_Collection.prototype.for = function(data, fn) {
   if(!(data instanceof Array)) data = [data];
 
-  _.each(this.views, function (view, i) {
+  this.views.forEach(function (view, i) {
     fn.call(view, data[i]);
   });
 };
@@ -152,10 +155,10 @@ pw_Collection.prototype.match = function (data, fn) {
     this.remove();
     return fn.call(this);
   } else {
-    _.each(this.views, function (view) {
+    this.views.forEach(function (view) {
       var id = parseInt(view.node.getAttribute('data-id'));
       if (!id) return;
-      if (!_.find(data, function (datum) { return datum.id === id })) {
+      if (!data.find(function (datum) { return datum.id === id })) {
         this.removeView(view);
       }
     }, this);
@@ -165,8 +168,8 @@ pw_Collection.prototype.match = function (data, fn) {
       var that = this;
 
       window.socket.fetchView({ channel: channel }, function (view) {
-        _.each(data, function (datum) {
-          if (!_.find(that.views, function (view) { return parseInt(view.node.getAttribute('data-id')) === datum.id })) {
+        data.forEach(function (datum) {
+          if (!that.views.find(function (view) { return parseInt(view.node.getAttribute('data-id')) === datum.id })) {
             that.addView(view.clone());
           }
         }, that);
@@ -199,6 +202,6 @@ pw_Collection.prototype.bind = function (data, fn) {
 pw_Collection.prototype.apply = function (data, fn) {
   this.match(data, function () {
     this.bind(data, fn);
-    this.order(_.map(data, function (datum) { return datum.id; }))
+    this.order(data.map(function (datum) { return datum.id; }))
   });
 };

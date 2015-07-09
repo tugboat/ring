@@ -1,7 +1,3 @@
-//TODO we're only using the following fns from underscore, and it's adding ~20kb to the lib,
-// effectively doubling its size. let's remove this dependency.
-// each,map,flatten,filter,rest,chain,last,isFunction,pairs,without,findWhere,contains,clone
-
 var pw = {};
 (function() {
 pw.util = {};
@@ -25,7 +21,7 @@ pw.init.register = function (fn) {
 };
 
 document.addEventListener("DOMContentLoaded", function(event) {
-  _.each(initFns, function (fn) {
+  initFns.forEach(function (fn) {
     fn();
   });
 });
@@ -108,7 +104,7 @@ pw.node.isSignificant = function(node) {
 }
 
 pw.node.mutable = function (node) {
-  return _.chain(pw.node.significant(node)).flatten().filter(function (node) {
+  pw.node.significant(node).flatten().filter(function (node) {
     return pw.node.isMutable(node.node);
   }).map(function (node) {
     return node.node;
@@ -191,17 +187,27 @@ pw.node.with = function(node, cb) {
 };
 
 pw.node.for = function(node, data, cb) {
-  if(!(node instanceof Array) && !pw.node.isNodeList(node)) node = [node];
-  if(!(data instanceof Array)) data = [data];
+  if(!(node instanceof Array) && !pw.node.isNodeList(node)) {
+    node = [node];
+  }
 
-  _.each(node, function (e, i) {
+  if(!(data instanceof Array)) {
+    data = [data];
+  }
+
+  node.each(function (e, i) {
     cb.call(e, data[i]);
   });
 };
 
 pw.node.match = function(node, data) {
-  if(!(node instanceof Array) && !pw.node.isNodeList(node)) node = [node];
-  if(!(data instanceof Array)) data = [data];
+  if(!(node instanceof Array) && !pw.node.isNodeList(node)) {
+    node = [node];
+  }
+
+  if(!(data instanceof Array)) {
+    data = [data];
+  }
 
   var collection = [];
   //TODO use each
@@ -210,7 +216,7 @@ pw.node.match = function(node, data) {
 
     // out of views, use the last one
     if(!view) {
-      view = _.last(node);
+      view = node[node.length - 1];
     }
 
     var dup = view.cloneNode(true);
@@ -308,7 +314,10 @@ pw.node.bindAttributesToNode = function (attrs, doc) {
       continue;
     }
 
-    if(_.isFunction(value)) value = value.call(doc.getAttribute(attr));
+    if(typeof value === 'function') {
+      value = value.call(doc.getAttribute(attr));
+    }
+
     !value ? pw.node.removeAttr(doc, attr) : pw.node.setAttr(doc, attr, value);
   }
 }
@@ -367,6 +376,7 @@ pw.node.isNodeList = function(nodes) {
 pw.node.byAttr = function (node, attr, compareValue) {
   var arr = [];
   var os = pw.node.all(node);
+  //TODO use each
   for(var i = 0; i < os.length; i++) {
     var o = os[i];
     var value = o.getAttribute(attr);
@@ -401,6 +411,7 @@ pw.node.all = function (node) {
   if(document !== node) arr.push(node);
 
   var os = node.getElementsByTagName('*');
+  //TODO use each
   for(var i = 0; i < os.length; i++) {
     arr.push(os[i]);
   }
@@ -493,13 +504,13 @@ pw_Attrs.prototype.findValue = function (view, attr) {
 };
 
 pw_Attrs.prototype.set = function (attr, value) {
-  _.each(this.views, function (view) {
+  this.views.forEach(function (view) {
     pw.node.setAttr(view.node, attr, value);
   });
 };
 
 pw_Attrs.prototype.ensure = function (attr, value) {
-  _.each(this.views, function (view) {
+  this.views.forEach(function (view) {
     var currentValue = this.findValue(view, attr);
 
     if (attr === 'class') {
@@ -507,7 +518,7 @@ pw_Attrs.prototype.ensure = function (attr, value) {
         currentValue.add(value);
       }
     } else if (attr === 'style') {
-      _.each(_.pairs(value), function (kv) {
+      value.pairs().forEach(function (kv) {
         view.node.style[kv[0]] = kv[1];
       });
     } else if (this.findType(attr) === 'bool') {
@@ -524,14 +535,14 @@ pw_Attrs.prototype.ensure = function (attr, value) {
 };
 
 pw_Attrs.prototype.deny = function (attr, value) {
-  _.each(this.views, function (view) {
+  this.views.forEach(function (view) {
     var currentValue = this.findValue(view, attr);
     if (attr === 'class') {
       if (currentValue.contains(value)) {
         currentValue.remove(value);
       }
     } else if (attr === 'style') {
-      _.each(_.pairs(value), function (kv) {
+      value.pairs().forEach(function (kv) {
         view.node.style[kv[0]] = view.node.style[kv[0]].replace(kv[1], '');
       });
     } else if (this.findType(attr) === 'bool') {
@@ -593,7 +604,7 @@ var pw_State = function (node) {
 
 // diff the node and capture any changes
 pw_State.prototype.diff = function (node) {
-  return _.map(_.flatten(pw.state.build(pw.node.significant(pw.node.scope(node)))), function (nodeState) {
+  return pw.state.build(pw.node.significant(pw.node.scope(node)).flatten().map(function (nodeState) {
     var last = this.node(nodeState);
 
     var diffObj = {
@@ -613,14 +624,15 @@ pw_State.prototype.diff = function (node) {
     // this.update(diffObj);
 
     return diffObj;
-  }, this);
+  }, this));
 }
 
 // update the current state (or state if passed) with diff
 pw_State.prototype.update = function (diff, state) {
-  _.each(_.filter(_.flatten(state || this.current), function (s) {
+  (state || this.current).flatten().filter(function (s) {
     return s.scope === diff.scope && s.id === diff.id;
-  }), function (s) {
+  }).forEach(function (s) {
+    //TODO use modern functions
     for (var key in diff) {
       if (key === 'guid') continue;
       if (s[key] !== diff[key]) {
@@ -639,11 +651,11 @@ pw_State.prototype.revert = function () {
 
 // rollback a diff by guid
 pw_State.prototype.rollback = function (guid) {
-  _.each(this.diffs, function (diff, i) {
+  this.diffs.forEach(function (diff, i) {
     if (diff.guid === guid) {
       // rebuild state by starting at initial and applying diffs before i
       var rbState = JSON.parse(JSON.stringify(this.initial));
-      _.each(this.diffs, function (aDiff) {
+      this.diffs.forEach(function (aDiff) {
         if (diff.guid === aDiff.guid) {
           return;
         }
@@ -652,7 +664,7 @@ pw_State.prototype.rollback = function (guid) {
       }, this);
 
       // apply diffs after i to get new current
-      _.each(_.rest(this.diffs, i + 1), function (aDiff) {
+      this.diffs.slice(i + 1).forEach(function (aDiff) {
         this.update(aDiff, rbState);
       }, this);
 
@@ -669,7 +681,7 @@ pw_State.prototype.rollback = function (guid) {
 
 // returns the current state for a node
 pw_State.prototype.node = function (nodeState) {
-  return _.filter(_.flatten(this.current), function (s) {
+  return this.current.flatten().filter(function (s) {
     return s.scope === nodeState.scope && s.id === nodeState.id;
   })[0];
 }
@@ -699,7 +711,7 @@ pw_View.prototype.applyState = function (stateArr, nodes) {
     nodes = pw.node.significant(this.node);
   }
 
-  _.each(stateArr, function (state, i) {
+  stateArr.forEach(function (state, i) {
     var node = nodes[i];
     pw.node.bind(state[0], node[0].node);
     this.applyState(state[1], node[1])
@@ -795,7 +807,7 @@ pw_View.prototype.attrs = function () {
 
 pw_View.prototype.scope = function (name) {
   return pw.collection.init(
-    _.reduce(pw.node.byAttr(this.node, 'data-scope', name), function (views, node) {
+    pw.node.byAttr(this.node, 'data-scope', name).reduce(function (views, node) {
       return views.concat(pw.view.init(node));
     }, [])
   );
@@ -803,7 +815,7 @@ pw_View.prototype.scope = function (name) {
 
 pw_View.prototype.prop = function (name) {
   return pw.collection.init(
-    _.reduce(pw.node.byAttr(this.node, 'data-prop', name), function (views, node) {
+    pw.node.byAttr(this.node, 'data-prop', name).reduce(function (views, node) {
       return views.concat(pw.view.init(node));
     }, [])
   );
@@ -811,7 +823,7 @@ pw_View.prototype.prop = function (name) {
 
 pw_View.prototype.component = function (name) {
   return pw.collection.init(
-    _.reduce(pw.node.byAttr(this.node, 'data-ui', name), function (views, node) {
+    pw.node.byAttr(this.node, 'data-ui', name).reduce(function (views, node) {
       return views.concat(pw.view.init(node));
     }, [])
   );
@@ -857,7 +869,7 @@ pw.collection.init = function (view_or_views, selector) {
 };
 
 pw.collection.fromNodes = function (nodes, selector) {
-  return pw.collection.init(_.map(nodes, function (node) {
+  return pw.collection.init(nodes.map(function (node) {
     return pw.view.init(node);
   }), selector);
 }
@@ -870,7 +882,7 @@ var pw_Collection = function (views, selector) {
 pw_Collection.prototype.find = function (query) {
   var localSelector = this.selector;
 
-  _.each(_.pairs(query), function (pair) {
+  query.pairs().forEach(function (pair) {
     localSelector += '[data-' + pair[0] + '="' + pair[1] + '"]';
   });
 
@@ -879,7 +891,10 @@ pw_Collection.prototype.find = function (query) {
 
 pw_Collection.prototype.removeView = function(view) {
   view.remove();
-  this.views = _.without(this.views, _.findWhere(this.views, view));
+
+  this.views = this.views.filter(function (v) {
+    return v !== view;
+  });
 };
 
 pw_Collection.prototype.addView = function(view) {
@@ -890,8 +905,8 @@ pw_Collection.prototype.addView = function(view) {
 
 //TODO look into a more efficient way of reordering nodes
 pw_Collection.prototype.order = function (orderedIds) {
-  _.each(orderedIds, function (id) {
-    var match = _.find(this.views, function (view) {
+  orderedIds.forEach(function (id) {
+    var match = this.views.find(function (view) {
       return parseInt(view.node.getAttribute('data-id')) === id;
     });
 
@@ -910,25 +925,25 @@ pw_Collection.prototype.attrs = function () {
 };
 
 pw_Collection.prototype.remove = function() {
-  _.each(this.views, function (view) {
+  this.views.forEach(function (view) {
     view.remove();
   });
 };
 
 pw_Collection.prototype.clear = function() {
-  _.each(this.views, function (view) {
+  this.views.forEach(function (view) {
     view.clear();
   });
 };
 
 pw_Collection.prototype.text = function(value) {
-  _.each(this.views, function (view) {
+  this.views.forEach(function (view) {
     view.text(value);
   });
 };
 
 pw_Collection.prototype.html = function(value) {
-  _.each(this.views, function (view) {
+  this.views.forEach(function (view) {
     view.html(value);
   });
 };
@@ -944,7 +959,7 @@ pw_Collection.prototype.prepend = function(data) {
   if(!(data instanceof Array)) data = [data];
   var firstView = this.views[0];
 
-  var prependedViews = _.map(data, function (datum) {
+  var prependedViews = data.map(function (datum) {
     var view = firstView.prepend(datum);
     this.views.push(view);
     return view;
@@ -957,7 +972,7 @@ pw_Collection.prototype.prepend = function(data) {
 
 pw_Collection.prototype.scope = function (name) {
   return pw.collection.init(
-    _.reduce(this.views, function (views, view) {
+    this.views.reduce(function (views, view) {
       return views.concat(view.scope(name));
     }, [])
   );
@@ -965,7 +980,7 @@ pw_Collection.prototype.scope = function (name) {
 
 pw_Collection.prototype.prop = function (name) {
   return pw.collection.init(
-    _.reduce(this.views, function (views, view) {
+    this.views.reduce(function (views, view) {
       return views.concat(view.prop(name));
     }, [])
   );
@@ -973,7 +988,7 @@ pw_Collection.prototype.prop = function (name) {
 
 pw_Collection.prototype.component = function (name) {
   return pw.collection.init(
-    _.reduce(this.views, function (views, view) {
+    this.views.reduce(function (views, view) {
       return views.concat(view.component(name));
     }, [])
   );
@@ -986,7 +1001,7 @@ pw_Collection.prototype.with = function (cb) {
 pw_Collection.prototype.for = function(data, fn) {
   if(!(data instanceof Array)) data = [data];
 
-  _.each(this.views, function (view, i) {
+  this.views.forEach(function (view, i) {
     fn.call(view, data[i]);
   });
 };
@@ -998,10 +1013,10 @@ pw_Collection.prototype.match = function (data, fn) {
     this.remove();
     return fn.call(this);
   } else {
-    _.each(this.views, function (view) {
+    this.views.forEach(function (view) {
       var id = parseInt(view.node.getAttribute('data-id'));
       if (!id) return;
-      if (!_.find(data, function (datum) { return datum.id === id })) {
+      if (!data.find(function (datum) { return datum.id === id })) {
         this.removeView(view);
       }
     }, this);
@@ -1011,8 +1026,8 @@ pw_Collection.prototype.match = function (data, fn) {
       var that = this;
 
       window.socket.fetchView({ channel: channel }, function (view) {
-        _.each(data, function (datum) {
-          if (!_.find(that.views, function (view) { return parseInt(view.node.getAttribute('data-id')) === datum.id })) {
+        data.forEach(function (datum) {
+          if (!that.views.find(function (view) { return parseInt(view.node.getAttribute('data-id')) === datum.id })) {
             that.addView(view.clone());
           }
         }, that);
@@ -1045,7 +1060,7 @@ pw_Collection.prototype.bind = function (data, fn) {
 pw_Collection.prototype.apply = function (data, fn) {
   this.match(data, function () {
     this.bind(data, fn);
-    this.order(_.map(data, function (datum) { return datum.id; }))
+    this.order(data.map(function (datum) { return datum.id; }))
   });
 };
 /*
@@ -1079,7 +1094,7 @@ pw.component.resetChannels = function () {
 pw.component.findAndInit = function (node) {
   pw.component.resetChannels();
 
-  _.each(pw.node.byAttr(node, 'data-ui'), function (uiNode) {
+  pw.node.byAttr(node, 'data-ui').forEach(function (uiNode) {
     var name = uiNode.getAttribute('data-ui');
     var cfn = components[name];
 
@@ -1101,7 +1116,7 @@ pw.component.findAndInit = function (node) {
 }
 
 pw.component.push = function (packet) {
-  _.each(channelComponents[packet.channel], function (component) {
+  channelComponents[packet.channel].forEach(function (component) {
     if (packet.payload.instruct) {
       component.instruct(packet.channel, packet.payload.instruct);
     } else {
@@ -1351,7 +1366,7 @@ pw.instruct.fetchView = function (packet, socket, node) {
 pw.instruct.perform = function (collection, instructions) {
   var self = this;
 
-  _.each(instructions, function (instruction, i) {
+  instructions.forEach(function (instruction, i) {
     var method = instruction[0];
     var value = instruction[1];
     var nested = instruction[2];
@@ -1382,7 +1397,7 @@ pw.instruct.perform = function (collection, instructions) {
 };
 
 pw.instruct.performAttr = function (context, attrInstructions) {
-  _.each(attrInstructions, function (attrInstruct) {
+  attrInstructions.forEach(function (attrInstruct) {
     var attr = attrInstruct[0];
     var value = attrInstruct[1];
     var nested = attrInstruct[2];
@@ -1393,6 +1408,43 @@ pw.instruct.performAttr = function (context, attrInstructions) {
       context[nested[0][0]](attr, nested[0][1]);
     }
   });
+}
+if (!Array.prototype.flatten) {
+  Array.prototype.flatten = function () {
+    return this.reduce(function (flat, toFlatten) {
+      return flat.concat(Array.isArray(toFlatten) ? flatten(toFlatten) : toFlatten);
+    }, []);
+  };
+}
+
+if (!Array.prototype.find) {
+  Array.prototype.find = function(predicate) {
+    if (this == null) {
+      throw new TypeError('Array.prototype.find called on null or undefined');
+    }
+    if (typeof predicate !== 'function') {
+      throw new TypeError('predicate must be a function');
+    }
+    var list = Object(this);
+    var length = list.length >>> 0;
+    var thisArg = arguments[1];
+    var value;
+
+    for (var i = 0; i < length; i++) {
+      value = list[i];
+      if (predicate.call(thisArg, value, i, list)) {
+        return value;
+      }
+    }
+    return undefined;
+  };
+}
+if (!Object.prototype.pairs) {
+  Object.prototype.pairs = function () {
+    this.keys().map(function (key) {
+      [key, this[key]];
+    }, this);
+  };
 }
 
   if (typeof define === "function" && define.amd) {

@@ -29,7 +29,7 @@ pw.component.resetChannels = function () {
 pw.component.findAndInit = function (node) {
   pw.component.resetChannels();
 
-  _.each(pw.node.byAttr(node, 'data-ui'), function (uiNode) {
+  pw.node.byAttr(node, 'data-ui').forEach(function (uiNode) {
     var name = uiNode.getAttribute('data-ui');
     var cfn = components[name];
 
@@ -51,7 +51,7 @@ pw.component.findAndInit = function (node) {
 }
 
 pw.component.push = function (packet) {
-  _.each(channelComponents[packet.channel], function (component) {
+  (channelComponents[packet.channel] || []).forEach(function (component) {
     if (packet.payload.instruct) {
       component.instruct(packet.channel, packet.payload.instruct);
     } else {
