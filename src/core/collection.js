@@ -1,207 +1,177 @@
-pw.collection = {};
+pw.collection = {
+  init: function (view_or_views, selector) {
+    if (view_or_views instanceof pw_Collection) {
+      return view_or_views
+    } else if (view_or_views.constructor !== Array) {
+      view_or_views = [view_or_views];
+    }
 
-pw.collection.init = function (view_or_views, selector) {
-  if (view_or_views instanceof pw_Collection) {
-    return view_or_views
-  } else if (view_or_views.constructor !== Array) {
-    view_or_views = [view_or_views];
+    return new pw_Collection(view_or_views, selector);
+  },
+
+  fromNodes: function (nodes, selector) {
+    return pw.collection.init(nodes.map(function (node) {
+      return pw.view.init(node);
+    }), selector);
   }
-
-  return new pw_Collection(view_or_views, selector);
 };
-
-pw.collection.fromNodes = function (nodes, selector) {
-  return pw.collection.init(nodes.map(function (node) {
-    return pw.view.init(node);
-  }), selector);
-}
 
 var pw_Collection = function (views, selector) {
   this.views = views;
   this.selector = selector;
 };
 
-pw_Collection.prototype.find = function (query) {
-  var localSelector = this.selector;
+pw_Collection.prototype = {
+  last: function () {
+    return this.views[this.views.length - 1];
+  },
 
-  query.pairs().forEach(function (pair) {
-    localSelector += '[data-' + pair[0] + '="' + pair[1] + '"]';
-  });
+  first: function () {
+    return this.views[0];
+  },
 
-  return pw.collection.fromNodes(Array.prototype.slice.call(document.querySelectorAll(localSelector)), localSelector);
-};
+  removeView: function(view) {
+    var index = this.views.indexOf(view);
+    if (index > -1) {
+      this.views.splice(index, 1)[0].remove();
+    }
+  },
 
-pw_Collection.prototype.removeView = function(view) {
-  view.remove();
-
-  this.views = this.views.filter(function (v) {
-    return v !== view;
-  });
-};
-
-pw_Collection.prototype.addView = function(view) {
-  var lastView = this.views[this.views.length - 1];
-  pw.node.after(lastView.node, view.node);
-  this.views.push(view);
-};
-
-//TODO look into a more efficient way of reordering nodes
-pw_Collection.prototype.order = function (orderedIds) {
-  orderedIds.forEach(function (id) {
-    var match = this.views.find(function (view) {
-      return parseInt(view.node.getAttribute('data-id')) === id;
-    });
-
-    match.node.parentNode.appendChild(match.node);
-  }, this);
-};
-
-pw_Collection.prototype.length = function () {
-  return this.views.length;
-};
-
-// pakyow api
-
-pw_Collection.prototype.attrs = function () {
-  return pw.attrs.init(this.views);
-};
-
-pw_Collection.prototype.remove = function() {
-  this.views.forEach(function (view) {
-    view.remove();
-  });
-};
-
-pw_Collection.prototype.clear = function() {
-  this.views.forEach(function (view) {
-    view.clear();
-  });
-};
-
-pw_Collection.prototype.text = function(value) {
-  this.views.forEach(function (view) {
-    view.text(value);
-  });
-};
-
-pw_Collection.prototype.html = function(value) {
-  this.views.forEach(function (view) {
-    view.html(value);
-  });
-};
-
-pw_Collection.prototype.append = function (data) {
-  if(!(data instanceof Array)) data = [data];
-  var last = this.views[this.views.length - 1];
-  this.views.push(last.append(data));
-  return last;
-};
-
-pw_Collection.prototype.prepend = function(data) {
-  if(!(data instanceof Array)) data = [data];
-  var firstView = this.views[0];
-
-  var prependedViews = data.map(function (datum) {
-    var view = firstView.prepend(datum);
+  addView: function(view) {
+    pw.node.after(this.last().node, view.node);
     this.views.push(view);
-    return view;
-  }, this);
+  },
 
-  return pw.collection.init(prependedViews);
-};
+  order: function (orderedIds) {
+    var match;
 
-//TODO insert
+    orderedIds.forEach(function (id) {
+      match = this.views.find(function (view) {
+        return parseInt(view.node.getAttribute('data-id')) === id;
+      });
 
-pw_Collection.prototype.scope = function (name) {
-  return pw.collection.init(
-    this.views.reduce(function (views, view) {
-      return views.concat(view.scope(name));
-    }, [])
-  );
-};
+      match.node.parentNode.appendChild(match.node);
+    }, this);
+  },
 
-pw_Collection.prototype.prop = function (name) {
-  return pw.collection.init(
-    this.views.reduce(function (views, view) {
-      return views.concat(view.prop(name));
-    }, [])
-  );
-};
+  length: function () {
+    return this.views.length;
+  },
 
-pw_Collection.prototype.component = function (name) {
-  return pw.collection.init(
-    this.views.reduce(function (views, view) {
-      return views.concat(view.component(name));
-    }, [])
-  );
-};
+  // pakyow api
 
-pw_Collection.prototype.with = function (cb) {
-  pw.node.with(this.views, cb);
-};
+  attrs: function () {
+    return pw.attrs.init(this.views);
+  },
 
-pw_Collection.prototype.for = function(data, fn) {
-  if(!(data instanceof Array)) data = [data];
+  append: function (data) {
+    data = Array.ensure(data);
 
-  this.views.forEach(function (view, i) {
-    fn.call(view, data[i]);
-  });
-};
+    var last = this.last();
+    this.views.push(last.append(data));
+    return last;
+  },
 
-pw_Collection.prototype.match = function (data, fn) {
-  if(!(data instanceof Array)) data = [data];
+  prepend: function(data) {
+    data = Array.ensure(data);
 
-  if (data.length === 0) {
-    this.remove();
-    return fn.call(this);
-  } else {
-    this.views.forEach(function (view) {
-      var id = parseInt(view.node.getAttribute('data-id'));
-      if (!id) return;
-      if (!data.find(function (datum) { return datum.id === id })) {
-        this.removeView(view);
-      }
+    var prependedViews = data.map(function (datum) {
+      var view = this.first().prepend(datum);
+      this.views.push(view);
+      return view;
     }, this);
 
-    if (data.length > this.views.length) {
-      var channel = this.views[0].node.getAttribute('data-channel');
-      var that = this;
+    return pw.collection.init(prependedViews);
+  },
 
-      window.socket.fetchView({ channel: channel }, function (view) {
-        data.forEach(function (datum) {
-          if (!that.views.find(function (view) { return parseInt(view.node.getAttribute('data-id')) === datum.id })) {
-            that.addView(view.clone());
-          }
-        }, that);
+  with: function (cb) {
+    pw.node.with(this.views, cb);
+  },
 
-        return fn.call(that);
-      });
-    } else {
+  for: function(data, fn) {
+    data = Array.ensure(data);
+
+    this.views.forEach(function (view, i) {
+      fn.call(view, data[i]);
+    });
+  },
+
+  match: function (data, fn) {
+    data = Array.ensure(data);
+
+    if (data.length === 0) {
+      this.remove();
       return fn.call(this);
+    } else {
+      this.views.forEach(function (view) {
+        var id = parseInt(view.node.getAttribute('data-id'));
+        if (!id) return;
+        if (!data.find(function (datum) { return datum.id === id })) {
+          this.removeView(view);
+        }
+      }, this);
+
+      if (data.length > this.views.length) {
+        var channel = this.first().node.getAttribute('data-channel');
+        var that = this;
+
+        window.socket.fetchView({ channel: channel }, function (view) {
+          data.forEach(function (datum) {
+            if (!that.views.find(function (view) { return parseInt(view.node.getAttribute('data-id')) === datum.id })) {
+              that.addView(view.clone());
+            }
+          }, that);
+
+          return fn.call(that);
+        });
+      } else {
+        return fn.call(this);
+      }
     }
+
+    return this;
+  },
+
+  repeat: function (data, fn) {
+    this.match(data, function () {
+      this.for(data, fn);
+    });
+  },
+
+  bind: function (data, fn) {
+    this.for(data, function(datum) {
+      this.bind(datum);
+
+      if(!(typeof fn === 'undefined')) fn.call(this, datum);
+    });
+
+    return this;
+  },
+
+  apply: function (data, fn) {
+    this.match(data, function () {
+      this.bind(data, fn);
+      this.order(data.map(function (datum) { return datum.id; }))
+    });
   }
-
-  return this;
 };
 
-pw_Collection.prototype.repeat = function (data, fn) {
-  this.match(data, function () {
-    this.for(data, fn);
-  });
-};
+// lookup functions
+['scope', 'prop', 'component'].forEach(function (method) {
+  pw_Collection.prototype[method] = function (name) {
+    return pw.collection.init(
+      this.views.reduce(function (views, view) {
+        return views.concat(view[method](name));
+      }, [])
+    );
+  };
+});
 
-pw_Collection.prototype.bind = function (data, fn) {
-  this.for(data, function(datum) {
-    this.bind(datum);
-    if(!(typeof fn === 'undefined')) fn.call(this, datum);
-  });
-
-  return this;
-};
-
-pw_Collection.prototype.apply = function (data, fn) {
-  this.match(data, function () {
-    this.bind(data, fn);
-    this.order(data.map(function (datum) { return datum.id; }))
-  });
-};
+// pass through functions
+['remove', 'clear', 'text', 'html'].forEach(function (method) {
+  pw_Collection.prototype[method] = function (arg) {
+    this.views.forEach(function (view) {
+      view[method](arg);
+    });
+  };
+});

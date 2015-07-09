@@ -1,12 +1,13 @@
-pw.init = {};
+var fns = [];
 
-var initFns = [];
-pw.init.register = function (fn) {
-  initFns.push(fn);
+pw.init = {
+  register: function (fn) {
+    fns.push(fn);
+  }
 };
 
-document.addEventListener("DOMContentLoaded", function(event) {
-  initFns.forEach(function (fn) {
+document.addEventListener("DOMContentLoaded", function() {
+  fns.forEach(function (fn) {
     fn();
   });
 });

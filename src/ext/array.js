@@ -28,3 +28,11 @@ if (!Array.prototype.find) {
     return undefined;
   };
 }
+
+Array.ensure = function (value) {
+  if(!(value instanceof Array)) {
+    return [value];
+  }
+
+  return value
+}

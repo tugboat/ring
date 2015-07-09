@@ -10,84 +10,83 @@ pw.init.register(function () {
   Component related functions.
 */
 
-pw.component = {};
-
-pw.component.init = function (view, config) {
-  return new pw_Component(view, config);
-};
-
 // stores component functions by name
 var components = {};
 
 // stores component instances by channel
 var channelComponents = {};
 
-pw.component.resetChannels = function () {
-  channelComponents = {};
-};
+pw.component = {
+  init: function (view, config) {
+    return new pw_Component(view, config);
+  },
 
-pw.component.findAndInit = function (node) {
-  pw.component.resetChannels();
+  resetChannels: function () {
+    channelComponents = {};
+  },
 
-  pw.node.byAttr(node, 'data-ui').forEach(function (uiNode) {
-    var name = uiNode.getAttribute('data-ui');
-    var cfn = components[name];
+  findAndInit: function (node) {
+    pw.component.resetChannels();
 
-    var channel = uiNode.getAttribute('data-channel');
-    var config = uiNode.getAttribute('data-config');
-    var view = pw.view.init(uiNode);
+    pw.node.byAttr(node, 'data-ui').forEach(function (uiNode) {
+      var name = uiNode.getAttribute('data-ui');
+      var cfn = components[name] || pw.component.init;
 
-    if (cfn) {
+      var channel = uiNode.getAttribute('data-channel');
+      var config = uiNode.getAttribute('data-config');
+      var view = pw.view.init(uiNode);
+
       var component = new cfn(view, pw.component.buildConfigObject(config));
       component.config = config;
       component.view = view;
 
       pw.component.registerForChannel(component, channel);
-    } else {
-      var component = new pw.component.init(view, pw.component.buildConfigObject(config));
-      pw.component.registerForChannel(component, channel);
+    });
+  },
+
+  push: function (packet) {
+    var channel = packet.channel;
+    var instruct = packet.instruct;
+    var payload = packet.payload;
+
+    (channelComponents[channel] || []).forEach(function (component) {
+      if (instruct) {
+        component.instruct(channel, instruct);
+      } else {
+        component.message(channel, payload);
+      }
+    });
+  },
+
+  register: function (name, fn) {
+    ['listen', 'broadcast', 'instruct'].forEach(function (method) {
+      fn.prototype[method] = pw_Component.prototype[method];
+    });
+
+    components[name] = fn;
+  },
+
+  buildConfigObject: function(configString) {
+    if (!configString) {
+      return {};
     }
-  });
-}
 
-pw.component.push = function (packet) {
-  (channelComponents[packet.channel] || []).forEach(function (component) {
-    if (packet.payload.instruct) {
-      component.instruct(packet.channel, packet.payload.instruct);
-    } else {
-      component.message(packet.channel, packet.payload);
+    return configString.split(';').reduce(function (config, option) {
+      var kv = option.trim().split(':');
+      console.log(kv)
+      config[kv[0].trim()] = kv[1].trim();
+      return config;
+    }, {});
+  },
+
+  registerForChannel: function (component, channel) {
+    // store component instance by channel for messaging
+    if (!channelComponents[channel]) {
+      channelComponents[channel] = [];
     }
-  });
-}
 
-pw.component.register = function (name, fn) {
-  fn.prototype.listen    = pw_Component.prototype.listen;
-  fn.prototype.broadcast = pw_Component.prototype.broadcast;
-  fn.prototype.instruct  = pw_Component.prototype.instruct;
-  components[name] = fn;
-}
-
-pw.component.buildConfigObject = function(configString) {
-  var confObj = {};
-
-  if (configString != null) {
-    var pairs = configString.split(";");
-    for(var i = 0; i < pairs.length; i++) {
-      var kv = pairs[i].trim().split(":");
-      confObj[kv[0].trim()] = kv[1].trim();
-    }
+    channelComponents[channel].push(component);
   }
-
-  return confObj;
-};
-
-pw.component.registerForChannel = function (component, channel) {
-  // store component instance by channel for messaging
-  if (!channelComponents[channel]) {
-    channelComponents[channel] = [];
-  }
-
-  channelComponents[channel].push(component);
 };
 
 /*
@@ -99,22 +98,23 @@ var pw_Component = function (view, config) {
   this.config = config;
 }
 
-pw_Component.prototype.listen = function (channel) {
-  pw.component.registerForChannel(this, channel);
-};
+pw_Component.prototype = {
+  listen: function (channel) {
+    pw.component.registerForChannel(this, channel);
+  },
 
-pw_Component.prototype.broadcast = function (payload, channel) {
-  pw.component.push({ payload: payload, channel: channel });
-};
+  broadcast: function (payload, channel) {
+    pw.component.push({ payload: payload, channel: channel });
+  },
 
-pw_Component.prototype.instruct = function (channel, instructions) {
-  var packet = {
-    payload: instructions,
-    channel: channel
-  };
+  instruct: function (channel, instructions) {
+    var packet = {
+      payload: instructions,
+      channel: channel
+    };
 
-  pw.instruct.process(pw.collection.init(this.view), packet, window.socket);
-};
+    pw.instruct.process(pw.collection.init(this.view), packet, window.socket);
+  },
 
-pw_Component.prototype.message = function (channel, payload) {
+  message: function (channel, payload) {}
 };
