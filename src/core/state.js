@@ -4,14 +4,14 @@
 
 pw.state = {
   build: function (sigArr, parentObj) {
-    var retState = [];
-    for (var i = 0; i < sigArr.length; i++) {
-      var nodeState = pw.state.buildForNode(sigArr[i], parentObj);
-      if (!nodeState) continue;
-      retState.push(nodeState);
-    }
+    var nodeState;
+    return sigArr.reduce(function (acc, sig) {
+      if (nodeState = pw.state.buildForNode(sig, parentObj)) {
+        acc.push(nodeState);
+      }
 
-    return retState;
+      return acc;
+    }, []);
   },
 
   buildForNode: function (sigTuple, parentObj) {
@@ -19,19 +19,21 @@ pw.state = {
     var obj = {};
 
     if (sig.type === 'scope') {
-      obj.scope = sig.node.getAttribute('data-scope');
       obj.id = sig.node.getAttribute('data-id');
+      obj.scope = sig.node.getAttribute('data-scope');
     } else if (sig.type === 'prop' && parentObj) {
       parentObj[sig.node.getAttribute('data-prop')] = pw.node.value(sig.node);
       return;
     }
 
-    return [obj, pw.state.build(sigTuple[1], obj)];
+    obj['__nested'] = pw.state.build(sigTuple[1], obj);
+
+    return obj;
   },
 
   // creates and returns a new pw_State for the document or node
-  init: function (node) {
-    return new pw_State(node);
+  init: function (node, observer) {
+    return new pw_State(node, observer);
   }
 };
 
@@ -41,93 +43,73 @@ pw.state = {
 */
 
 var pw_State = function (node) {
-  this.initial = pw.state.build(pw.node.significant(node));
-  this.current = JSON.parse(JSON.stringify(this.initial));
-  this.diffs = [];
+  this.node = node;
+  //FIXME storing diffs is probably better than full snapshots
+  this.snapshots = [];
+  this.update();
 }
 
 pw_State.prototype = {
-  // diff the node and capture any changes
-  diff: function (node) {
-    return pw.state.build(pw.node.significant(pw.node.scope(node))).flatten().map(function (nodeState) {
-      var last = this.node(nodeState);
-
-      var diffObj = {
-        node: node,
-        guid: pw.util.guid(),
-        scope: nodeState.scope,
-        id: nodeState.id
-      };
-
-      for (var key in nodeState) {
-        if(!last || nodeState[key] !== last[key]) {
-          diffObj[key] = nodeState[key];
-        }
-      }
-
-      this.diffs.push(diffObj);
-      // this.update(diffObj);
-
-      return diffObj;
-    }, this);
+  update: function () {
+    this.snapshots.push(pw.state.build(pw.node.significant(this.node)));
   },
 
-  // update the current state (or state if passed) with diff
-  update: function (diff, state) {
-    (state || this.current).flatten().filter(function (s) {
-      return s.scope === diff.scope && s.id === diff.id;
-    }).forEach(function (s) {
-      //TODO use modern functions
-      for (var key in diff) {
-        if (key === 'guid') continue;
-        if (s[key] !== diff[key]) {
-          s[key] = diff[key];
-        }
-      }
-    });
+  // gets the current represented state from the node and diffs it with the current state
+  diffNode: function (node) {
+    return pw.state.build(pw.node.significant(pw.node.scope(node)))[0];
   },
 
-  // reverts back to the initial state, capturing the revert as a diff
   revert: function () {
-    var diff = this.initial[0][0];
-    this.diffs.push(diff);
-    this.update(diff);
+    var initial = pw.util.dup(this.snapshots[0]);
+    this.snapshots = [initial];
+    return initial;
   },
 
-  // rollback a diff by guid
-  rollback: function (guid) {
-    this.diffs.forEach(function (diff, i) {
-      if (diff.guid === guid) {
-        // rebuild state by starting at initial and applying diffs before i
-        var rbState = JSON.parse(JSON.stringify(this.initial));
-        this.diffs.forEach(function (aDiff) {
-          if (diff.guid === aDiff.guid) {
-            return;
-          }
-
-          this.update(aDiff, rbState);
-        }, this);
-
-        // apply diffs after i to get new current
-        this.diffs.slice(i + 1).forEach(function (aDiff) {
-          this.update(aDiff, rbState);
-        }, this);
-
-        // remove diff
-        this.diffs.splice(i, 1);
-
-        // set current state
-        this.current = rbState;
-
-        return;
-      }
-    }, this);
+  rollback: function () {
+    this.snapshots.pop();
+    return this.current();
   },
 
   // returns the current state for a node
   node: function (nodeState) {
-    return this.current.flatten().filter(function (s) {
-      return s.scope === nodeState.scope && s.id === nodeState.id;
-    })[0];
+    return this.current.flatten().find(function (state) {
+      return state.scope === nodeState.scope && state.id === nodeState.id;
+    });
+  },
+
+  append: function (state) {
+    var copy = this.copy();
+    copy.push(state);
+    this.snapshots.push(copy);
+  },
+
+  prepend: function (state) {
+    var copy = this.copy();
+    copy.unshift(state);
+    this.snapshots.push(copy);
+  },
+
+  delete: function (state) {
+    var copy = this.copy();
+    var match = copy.find(function (s) {
+      return s.id === state.id;
+    });
+
+    if (match) {
+      copy.splice(copy.indexOf(match), 1);
+      this.snapshots.push(copy);
+    }
+  },
+
+  copy: function () {
+    return pw.util.dup(this.current());
+  },
+
+  current: function () {
+    return this.snapshots[this.snapshots.length - 1];
+  },
+
+  initial: function () {
+    return this.snapshots[0];
   }
 };

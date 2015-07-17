@@ -104,13 +104,39 @@ pw.node = {
     node.addEventListener(eventName, cb);
   },
 
+  inForm: function (node) {
+    if (node.tagName === 'FORM') {
+      return true;
+    }
+
+    var next = node.parentNode;
+    if (next !== document) {
+      return pw.node.inForm(next);
+    }
+  },
+
+  // finds and returns component for node
+  component: function (node) {
+    if (node.getAttribute('data-ui')) {
+      return node;
+    }
+
+    var next = node.parentNode;
+    if (next !== document) {
+      return pw.node.component(next);
+    }
+  },
+
   // finds and returns scope for node
   scope: function (node) {
     if (node.getAttribute('data-scope')) {
       return node;
     }
 
-    return pw.node.scope(node.parentNode);
+    var next = node.parentNode;
+    if (next !== document) {
+      return pw.node.scope(next);
+    }
   },
 
   // returns the name of the scope for node
@@ -119,7 +145,10 @@ pw.node = {
       return node.getAttribute('data-scope');
     }
 
-    return pw.node.scopeName(node.parentNode);
+    var next = node.parentNode;
+    if (next !== document) {
+      return pw.node.scopeName(next);
+    }
   },
 
   // finds and returns prop for node
@@ -128,7 +157,10 @@ pw.node = {
       return node;
     }
 
-    return pw.node.prop(node.parentNode);
+    var next = node.parentNode;
+    if (next !== document) {
+      return pw.node.prop(next);
+    }
   },
 
   // returns the name of the prop for node
@@ -137,7 +169,10 @@ pw.node = {
       return node.getAttribute('data-prop');
     }
 
-    return pw.node.propName(node.parentNode);
+    var next = node.parentNode;
+    if (next !== document) {
+      return pw.node.propName(next);
+    }
   },
 
   // returns the name of the version for node
@@ -361,7 +396,7 @@ pw.node = {
   byAttr: function (node, attr, value) {
     return pw.node.all(node).filter(function (o) {
       var ov = o.getAttribute(attr);
-      return ov !== null && ((typeof v) === 'undefined' || ov == v);
+      return ov !== null && ((typeof value) === 'undefined' || ov == value);
     });
   },
 

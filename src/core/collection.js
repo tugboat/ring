@@ -1,29 +1,30 @@
 pw.collection = {
-  init: function (view_or_views, selector) {
+  init: function (view_or_views, parent, scope) {
     if (view_or_views instanceof pw_Collection) {
       return view_or_views
     } else if (view_or_views.constructor !== Array) {
       view_or_views = [view_or_views];
     }
 
-    return new pw_Collection(view_or_views, selector);
+    return new pw_Collection(view_or_views, parent, scope);
   },
 
-  fromNodes: function (nodes, selector) {
+  fromNodes: function (nodes, parent, scope) {
     return pw.collection.init(nodes.map(function (node) {
       return pw.view.init(node);
-    }), selector);
+    }), parent, scope);
   }
 };
 
-var pw_Collection = function (views, selector) {
+var pw_Collection = function (views, parent, scope) {
   this.views = views;
-  this.selector = selector;
+  this.parent = parent;
+  this.scope = scope;
 };
 
 pw_Collection.prototype = {
   last: function () {
-    return this.views[this.views.length - 1];
+    return this.views[this.length() - 1];
   },
 
   first: function () {
@@ -32,13 +33,21 @@ pw_Collection.prototype = {
 
   removeView: function(view) {
     var index = this.views.indexOf(view);
+
     if (index > -1) {
       this.views.splice(index, 1)[0].remove();
     }
   },
 
   addView: function(view) {
-    pw.node.after(this.last().node, view.node);
+    if (this.length() > 0) {
+      pw.node.after(this.last().node, view.node);
+    } else if (this.parent) {
+      this.parent.append(view);
+    }
+
+    pw.component.findAndInit(view.node);
+
     this.views.push(view);
   },
 
@@ -46,11 +55,13 @@ pw_Collection.prototype = {
     var match;
 
     orderedIds.forEach(function (id) {
-      match = this.views.find(function (view) {
+      var match = this.views.find(function (view) {
         return parseInt(view.node.getAttribute('data-id')) === id;
       });
 
-      match.node.parentNode.appendChild(match.node);
+      if (match) {
+        match.node.parentNode.appendChild(match.node);
+      }
     }, this);
   },
 
@@ -104,29 +115,33 @@ pw_Collection.prototype = {
       return fn.call(this);
     } else {
       this.views.forEach(function (view) {
-        var id = parseInt(view.node.getAttribute('data-id'));
-        if (!id) return;
-        if (!data.find(function (datum) { return datum.id === id })) {
+        var id = view.node.getAttribute('data-id');
+
+        if (!id) {
+          return;
+        }
+
+        if (!data.find(function (datum) { return datum.id.toString() === id })) {
           this.removeView(view);
         }
       }, this);
 
-      if (data.length > this.views.length) {
-        var channel = this.first().node.getAttribute('data-channel');
-        var that = this;
-
-        window.socket.fetchView({ channel: channel }, function (view) {
+      if (data.length > this.length()) {
+        var self = this;
+        this.endpoint.template(this, function (view) {
           data.forEach(function (datum) {
-            if (!that.views.find(function (view) { return parseInt(view.node.getAttribute('data-id')) === datum.id })) {
-              that.addView(view.clone());
+            if (!self.views.find(function (view) {
+              return view.node.getAttribute('data-id') === (datum.id || '').toString()
+            })) {
+              self.addView(view.clone());
             }
-          }, that);
+          }, self);
 
-          return fn.call(that);
+          return fn.call(self);
         });
-      } else {
-        return fn.call(this);
       }
+
+      return fn.call(this);
     }
 
     return this;
@@ -142,7 +157,9 @@ pw_Collection.prototype = {
     this.for(data, function(datum) {
       this.bind(datum);
 
-      if(!(typeof fn === 'undefined')) fn.call(this, datum);
+      if(!(typeof fn === 'undefined')) {
+        fn.call(this, datum);
+      }
     });
 
     return this;
@@ -151,8 +168,18 @@ pw_Collection.prototype = {
   apply: function (data, fn) {
     this.match(data, function () {
       this.bind(data, fn);
-      this.order(data.map(function (datum) { return datum.id; }))
+      var id;
+      this.order(data.map(function (datum) {
+        if (id = datum.id) {
+          return id.toString();
+        }
+      }));
     });
+  },
+
+  endpoint: function (endpoint) {
+    this.endpoint = endpoint;
+    return this;
   }
 };
 

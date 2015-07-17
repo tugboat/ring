@@ -1,48 +1,116 @@
 <html>
 <head>
-  <script src="../pakyow.js"></script>
-  <script src="../node_modules/underscore/underscore.js"></script>
+  <script src="../build/pakyow.js"></script>
 </head>
-<body data-ui="todos">
-  <div data-scope="list" data-id="1">
-    <div data-scope="task" data-id="1">
+<body>
+  <div style="margin-bottom: 15px">
+    <button data-ui="undo">
+      undo
+    </button>
+
+    <button data-ui="revert">
+      revert
+    </button>
+  </div>
+
+  <form data-ui="todo-form" data-scope="todo">
+    <input type="text" data-prop="body">
+    <input type="submit" value="create">
+  </form>
+
+  <div data-ui="todo-list">
+    <div data-ui="todo-count" style="margin-bottom: 5px"></div>
+
+    <div data-scope="todo" data-template>
+      <!-- this is a template that defines the starting point for new `todo` 
+           state (removed when the component boots up) -->
       <input type="checkbox" data-prop="completed">
 
-      <label data-prop="body">
-        foo
-      </label>
-    </div>
+      <a href="#" data-ui="todo-delete">
+        del
+      </a>
 
-    <div data-scope="task" data-id="2">
-      <input type="checkbox" data-prop="completed" checked>
-
-      <label data-prop="body">
-        bar
-      </label>
+      <span data-prop="body">
+        body goes here
+      </span>
     </div>
   </div>
 
   <script>
-    pw.component.register('todos', function () {
+    pw.component.register('todo-form', function (view, config) {
+      // called with each mutation that occurs in the view
+      // (like when the form is submitted)
+      this.mutation = function (mutation) {
+        mutation.id = pw.util.guid();
 
-      this.init = function () {
-        // registers this component as an endpoint for all todo scopes
-        // anytime a todo mutates, the fn will be called
-        this.listen({ scope: 'todo' }, function (data) {
-          console.log('mutated');
-          console.log(data);
-        });
-      }
+        // announce that we created a todo, with the state
+        pw.component.broadcast('todo:created', mutation);
 
-      //TODO should be able to trigger mutations on something within it
+        // set the state (and the view) back to what it was originally
+        this.revert();
+      };
     });
 
-    // create the application's view
-    var view = pw.view.init(document);
+    pw.component.register('todo-list', function (view, config) {
+      this.listen('todo:created', function (todo) {
+        this.append(todo);
+      });
 
-    // register components
-    //TODO thinking this should happen in view?
-    pw.component.findAndInit(document);
+      this.listen('todo:deleted', function (todo) {
+        this.delete(todo);
+      });
+
+      this.listen('control:undo', function () {
+        this.rollback();
+      });
+
+      this.listen('control:revert', function () {
+        this.revert();
+      });
+    });
+
+    pw.component.register('todo-delete', function (view, config) {
+      var self = this;
+      view.node.addEventListener('click', function (evt) {
+        pw.component.broadcast('todo:deleted', self.parent());
+        evt.preventDefault();
+      });
+    });
+
+    pw.component.register('todo-count', function (view, config) {
+      // registers the count to be dependent on the parent state
+      //
+      // the parent state is passed to the callback, where it's transformed
+      // into the state needed by this component then passed to
+      // the transform function
+      this.dependent(function (todos) {
+        var n = todos.length;
+        var c = todos.filter(function (s) {
+          return s.completed === true;
+        }).length;
+
+        return {
+          total: n,
+          completed: c
+        };
+      });
+
+      this.transform = function (state) {
+        view.node.innerText = state.completed + ' / ' + state.total;
+      };
+    });
+
+    pw.component.register('undo', function (view, config) {
+      view.node.addEventListener('click', function () {
+        pw.component.broadcast('control:undo');
+      });
+    });
+
+    pw.component.register('revert', function (view, config) {
+      view.node.addEventListener('click', function () {
+        pw.component.broadcast('control:revert');
+      });
+    });
   </script>
 </body>
 </html>

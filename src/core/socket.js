@@ -31,6 +31,10 @@ pw.socket = {
     if(typeof protocol === 'undefined') protocol = window.location.protocol;
     if(typeof connId === 'undefined') connId = document.getElementsByTagName('body')[0].getAttribute('data-socket-connection-id');
 
+    if (!connId) {
+      return;
+    }
+
     var wsUrl = '';
 
     if (protocol === 'http:') {
@@ -128,17 +132,17 @@ pw_Socket.prototype = {
   reconnect: function () {
     var self = this;
 
-    if (!self.socketWait) {
-      self.socketWait = 100;
+    if (!self.wait) {
+      self.wait = 100;
     } else {
-      self.socketWait *= 1.25;
+      self.wait *= 1.25;
     }
 
-    console.log('reconnecting socket in ' + self.socketWait + 'ms');
+    console.log('reconnecting socket in ' + self.wait + 'ms');
 
     setTimeout(function () {
       pw.socket.init({ cb: self.initCb });
-    }, self.socketWait);
+    }, self.wait);
   },
 
   fetchView: function (lookup, cb) {
@@ -149,12 +153,8 @@ pw_Socket.prototype = {
       lookup: lookup,
       uri: uri
     }, function (res) {
-      var e = document.createElement("div");
-      e.innerHTML = res.body;
-
-      var view = pw.view.init(e.childNodes[0]);
+      var view = pw.view.fromStr(res.body);
       view.node.removeAttribute('data-id');
-
       cb(view);
     });
   }

@@ -1,4 +1,4 @@
-BUILD_DIR = '/Users/bryanp/code/pakyow/apps/chat-example/public/pakyow-js'
+BUILD_DIR = './build'
 BUILD_COMPONENT_DIR = File.join(BUILD_DIR, 'components')
 
 def smash(source, dest)

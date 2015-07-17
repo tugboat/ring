@@ -18,6 +18,22 @@ pw.instruct = {
     });
   },
 
+  template: function (view, cb) {
+    var lookup = {};
+    var node = view.first().node;
+
+    if (node.hasAttribute('data-channel')) {
+      lookup.channel = view.first().node.getAttribute('data-channel');
+    } else {
+      lookup.component = pw.node.component(node).getAttribute('data-ui');
+      lookup.scope = node.getAttribute('data-scope');
+    }
+
+    window.socket.fetchView(lookup, function (view) {
+      cb(view);
+    });
+  },
+
   perform: function (collection, instructions) {
     var self = this;
 
@@ -28,7 +44,7 @@ pw.instruct = {
 
       if (collection[method]) {
         if (method == 'with' || method == 'for' || method == 'bind' || method == 'repeat' || method == 'apply') {
-          collection[method].call(collection, value, function (datum) {
+          collection.endpoint(self)[method].call(collection, value, function (datum) {
             pw.instruct.perform(this, nested[value.indexOf(datum)]);
           });
           return;
