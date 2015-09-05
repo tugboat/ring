@@ -129,6 +129,12 @@ pw_Collection.prototype = {
       if (data.length > this.length()) {
         var self = this;
         this.endpoint.template(this, function (view) {
+          if (!view) {
+            view = self.views[0].clone();
+            self.parent = pw.view.init(self.views[0].node.parentNode);
+            self.removeView(self.views[0]);
+          }
+
           data.forEach(function (datum) {
             if (!self.views.find(function (view) {
               return view.node.getAttribute('data-id') === (datum.id || '').toString()

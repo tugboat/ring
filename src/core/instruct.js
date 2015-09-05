@@ -18,15 +18,19 @@ pw.instruct = {
     });
   },
 
+  // TODO: make this smart and cache results
   template: function (view, cb) {
     var lookup = {};
     var node = view.first().node;
 
     if (node.hasAttribute('data-channel')) {
       lookup.channel = view.first().node.getAttribute('data-channel');
-    } else {
+    } else if (node.hasAttribute('data-ui') && node.hasAttribute('data-scope')) {
       lookup.component = pw.node.component(node).getAttribute('data-ui');
       lookup.scope = node.getAttribute('data-scope');
+    } else {
+      cb();
+      return;
     }
 
     window.socket.fetchView(lookup, function (view) {
