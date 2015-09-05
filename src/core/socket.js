@@ -68,6 +68,8 @@ var pw_Socket = function (url, cb) {
   this.id = url.split('socket_connection_id=')[1]
 
   this.ws.onmessage = function (evt) {
+    pw.component.broadcast('socket:loaded');
+
     var data = JSON.parse(evt.data);
     if (data.id) {
       var cb = self.callbacks[data.id];
@@ -96,6 +98,8 @@ var pw_Socket = function (url, cb) {
 
 pw_Socket.prototype = {
   send: function (message, cb) {
+    pw.component.broadcast('socket:loading');
+
     message.id = pw.util.guid();
     if (!message.input) {
       message.input = {};
