@@ -17,6 +17,9 @@ var components = {};
 var channelComponents = {};
 var channelBroadcasts = {};
 
+// component instances
+var componentInstances = {};
+
 pw.component = {
   init: function (view, config) {
     return new pw_Component(view, config);
@@ -31,14 +34,20 @@ pw.component = {
       var name = uiNode.getAttribute('data-ui');
       var cfn = components[name] || pw.component.init;
 
+      if (!componentInstances[name]) {
+        componentInstances[name] = [];
+      }
+
       var channel = uiNode.getAttribute('data-channel');
       var config = uiNode.getAttribute('data-config');
       var view = pw.view.init(uiNode);
+      var id = componentInstances[name].length;
 
-      var component = new cfn(view, pw.component.buildConfigObject(config), name);
+      var component = new cfn(view, pw.component.buildConfigObject(config), name, id);
       component.init(view, config, name);
 
       pw.component.registerForChannel(component, channel);
+      componentInstances[name].push(component);
     });
   },
 
