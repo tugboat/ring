@@ -17,6 +17,8 @@ pw.node = {
       return node.value;
     } else if (node.tagName === 'TEXTAREA') {
       return node.value;
+    } else if (node.tagName === 'SELECT') {
+      return node.value;
     }
 
     return node.textContent.trim();
