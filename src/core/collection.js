@@ -194,7 +194,7 @@ pw_Collection.prototype = {
   pw_Collection.prototype[method] = function (name) {
     return pw.collection.init(
       this.views.reduce(function (views, view) {
-        return views.concat(view[method](name));
+        return views.concat(view[method](name).views);
       }, [])
     );
   };
