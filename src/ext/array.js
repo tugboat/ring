@@ -36,3 +36,5 @@ Array.ensure = function (value) {
 
   return value
 }
+
+NodeList.prototype.forEach = Array.prototype.forEach;

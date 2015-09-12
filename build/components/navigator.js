@@ -105,7 +105,7 @@ function handleState(state, direction) {
 
   var opts = {
     uri: uri,
-    action: 'call_route',
+    action: 'call-route',
     method: 'get'
   };
 

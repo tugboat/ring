@@ -8,7 +8,7 @@ pw.node = {
     if (node.tagName === 'INPUT') {
       if (node.type === 'checkbox') {
         if (node.checked) {
-          return node.name ? node.name : true;
+          return node.value ? node.value : true;
         } else {
           return false;
         }
@@ -465,5 +465,51 @@ pw.node = {
 
   toA: function (nodeSet) {
     return Array.prototype.slice.call(nodeSet);
+  },
+
+  serialize: function (node) {
+    var json = {};
+    var working;
+    var value;
+    var split, last;
+    var previous, previous_name;
+    node.querySelectorAll('input, select, textarea').forEach(function (input) {
+      working = json;
+      split = input.name.split('[');
+      last = split[split.length - 1];
+      split.forEach(function (name) {
+        value = pw.node.value(input);
+
+        if (name == ']') {
+          if (!(previous[previous_name] instanceof Array)) {
+            previous[previous_name] = [];
+          }
+
+          if (value) {
+            previous[previous_name].push(value);
+          }
+        }
+
+        if (name != last) {
+          value = {};
+        }
+
+        name = name.replace(']', '');
+
+        if (name == '' || name == '_method') {
+          return;
+        }
+
+        if (!working[name]) {
+          working[name] = value;
+        }
+
+        previous = working;
+        previous_name = name;
+        working = working[name];
+      });
+    });
+
+    return json;
   }
 };
