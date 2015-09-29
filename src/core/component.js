@@ -130,12 +130,19 @@ pw_Component.prototype = {
     var self = this;
 
     // setup templates
-    pw.node.toA(node.querySelectorAll('*[data-template]')).forEach(function (templateNode) {
+    pw.node.toA(node.querySelectorAll(':scope > *[data-template]')).forEach(function (templateNode) {
       var cloned = templateNode.cloneNode(true);
       pw.node.remove(templateNode);
 
+      var scope = cloned.getAttribute('data-scope');
+
+      if (this.templates[scope]) {
+        this.templates[scope].views.push(pw.view.init(cloned));
+      } else {
+        this.templates[scope] = pw.collection.init(pw.view.init(cloned));
+      }
+
       cloned.removeAttribute('data-template');
-      this.templates[cloned.getAttribute('data-scope')] = cloned;
     }, this);
 
     // setup our initial state
@@ -168,6 +175,10 @@ pw_Component.prototype = {
     });
 
     //TODO define other mutable things
+
+    if (this.inited) {
+      this.inited();
+    }
   },
 
   listen: function (channel, cb) {
@@ -212,8 +223,6 @@ pw_Component.prototype = {
   mutated: function (node) {
     this.mutation(this.state.diffNode(node));
     this.state.update();
-
-    pw.node.trigger('mutated', this.node, this.state.current());
   },
 
   mutation: function (mutation) {
@@ -221,6 +230,10 @@ pw_Component.prototype = {
   },
 
   transform: function (state) {
+    this._transform(state);
+  },
+
+  _transform: function (state) {
     if (!state) {
       return;
     }
@@ -234,8 +247,6 @@ pw_Component.prototype = {
         }
       });
     }
-
-    pw.node.trigger('mutated', this.node, this.state.current());
   },
 
   revert: function () {
@@ -250,7 +261,7 @@ pw_Component.prototype = {
     var template;
 
     if (template = this.templates[view.scope]) {
-      cb(pw.view.init(template.cloneNode(true)));
+      cb(template);
     }
   },
 
