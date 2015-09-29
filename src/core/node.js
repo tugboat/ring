@@ -412,6 +412,16 @@ pw.node = {
         value = value.join(' ');
       }
 
+      if (attr === 'checked') {
+        if (value) {
+          value = 'checked';
+        } else {
+          value = '';
+        }
+
+        node.checked = value;
+      }
+
       node.setAttribute(attr, value);
     }
   },
