@@ -21,6 +21,11 @@ pw.instruct = {
   // TODO: make this smart and cache results
   template: function (view, cb) {
     var lookup = {};
+
+    if (!view || !view.first()) {
+      return cb();
+    }
+
     var node = view.first().node;
 
     if (node.hasAttribute('data-channel')) {
