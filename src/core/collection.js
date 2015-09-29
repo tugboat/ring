@@ -23,6 +23,12 @@ var pw_Collection = function (views, parent, scope) {
 };
 
 pw_Collection.prototype = {
+  clone: function () {
+    return pw.collection.init(this.views.map(function (view) {
+      return view.clone();
+    }));
+  },
+
   last: function () {
     return this.views[this.length() - 1];
   },
@@ -39,16 +45,30 @@ pw_Collection.prototype = {
     }
   },
 
-  addView: function(view) {
-    if (this.length() > 0) {
-      pw.node.after(this.last().node, view.node);
-    } else if (this.parent) {
-      this.parent.append(view);
+  addView: function(view_or_views) {
+    var views = [];
+
+    if (view_or_views instanceof pw_Collection) {
+      views = view_or_views.views;
+    } else {
+      views.push(view_or_views);
     }
 
-    pw.component.findAndInit(view.node);
+    if (this.length() > 0) {
+      views.forEach(function (view) {
+        pw.node.after(this.last().node, view.node);
+      }, this);
+    } else if (this.parent) {
+      views.forEach(function (view) {
+        this.parent.append(view);
+      }, this);
+    }
 
-    this.views.push(view);
+    views.forEach(function (view) {
+      pw.component.findAndInit(view.node);
+    });
+
+    this.views = this.views.concat(views);
   },
 
   order: function (orderedIds) {
@@ -114,7 +134,10 @@ pw_Collection.prototype = {
       this.remove();
       return fn.call(this);
     } else {
-      this.views.forEach(function (view) {
+      var firstView = this.views[0].clone();
+      var firstParent = this.views[0].node.parentNode;
+
+      this.views.slice(0).forEach(function (view) {
         var id = view.node.getAttribute('data-id');
 
         if (!id) {
@@ -130,9 +153,8 @@ pw_Collection.prototype = {
         var self = this;
         this.endpoint.template(this, function (view) {
           if (!view) {
-            view = self.views[0].clone();
-            self.parent = pw.view.init(self.views[0].node.parentNode);
-            self.removeView(self.views[0]);
+            view = firstView.clone();
+            self.parent = pw.view.init(firstParent);
           }
 
           data.forEach(function (datum) {
@@ -145,9 +167,9 @@ pw_Collection.prototype = {
 
           return fn.call(self);
         });
+      } else {
+        return fn.call(this);
       }
-
-      return fn.call(this);
     }
 
     return this;
