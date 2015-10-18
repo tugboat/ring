@@ -150,7 +150,15 @@ pw_Socket.prototype = {
   },
 
   fetchView: function (lookup, cb) {
-    var uri = window.location.pathname + window.location.search;
+    var uri;
+
+    if (window.location.hash) {
+      var arr = window.location.hash.split('#:')[1].split('/');
+      arr.shift();
+      uri = arr.join('/');
+    } else {
+      uri = window.location.pathname + window.location.search;
+    }
 
     this.send({
       action: 'fetch-view',
