@@ -69,6 +69,10 @@ pw_Collection.prototype = {
 
   order: function (orderedIds) {
     orderedIds.forEach(function (id) {
+      if (!id) {
+        return;
+      }
+
       var match = this.views.find(function (view) {
         return view.node.getAttribute('data-id') == id.toString();
       });
@@ -133,8 +137,13 @@ pw_Collection.prototype = {
       this.remove();
       return fn.call(this);
     } else {
-      var firstView = this.views[0].clone();
-      var firstParent = this.views[0].node.parentNode;
+      var firstView;
+      var firstParent;
+
+      if (this.views[0]) {
+        firstView = this.views[0].clone();
+        firstParent = this.views[0].node.parentNode;
+      }
 
       this.views.slice(0).forEach(function (view) {
         var id = view.node.getAttribute('data-id');
@@ -161,8 +170,15 @@ pw_Collection.prototype = {
               return view.node.getAttribute('data-id') === (datum.id || '').toString()
             })) {
               var viewToAdd = view.clone();
+
+              if (viewToAdd instanceof pw_Collection) {
+                viewToAdd = viewToAdd.views[0];
+              }
+
               viewToAdd.node.setAttribute('data-id', datum.id);
               self.addView(viewToAdd);
+
+              pw.component.findAndInit(viewToAdd.node);
             }
           }, self);
 
