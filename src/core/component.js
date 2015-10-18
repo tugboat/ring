@@ -110,6 +110,17 @@ pw.component = {
     channelBroadcasts[channel].push([cb, component]);
   },
 
+  deregisterForBroadcast: function (channel, component) {
+    var components = channelBroadcasts[channel];
+
+    var instanceTuple = components.find(function (tuple) {
+      return tuple[1] == component;
+    });
+
+    var i = components.indexOf(instanceTuple);
+    components.splice(i, 1);
+  },
+
   broadcast: function (channel, payload) {
     (channelBroadcasts[channel] || []).forEach(function (cbTuple) {
       cbTuple[0].call(cbTuple[1], payload);
@@ -194,6 +205,10 @@ pw_Component.prototype = {
 
   listen: function (channel, cb) {
     pw.component.registerForBroadcast(channel, cb, this);
+  },
+
+  ignore: function (channel) {
+    pw.component.deregisterForBroadcast(channel, this);
   },
 
   //TODO this is pretty similary to processing instructions
