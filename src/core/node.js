@@ -429,6 +429,10 @@ pw.node = {
   all: function (node) {
     var arr = [];
 
+    if (!node) {
+      return arr;
+    }
+
     if(document !== node) {
       arr.push(node);
     }
