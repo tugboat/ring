@@ -9,12 +9,16 @@ pw.instruct = {
 
   fetchView: function (packet, socket, node) {
     socket.fetchView({ channel: packet.channel }, function (view) {
-      var parent = node.parentNode;
-      parent.replaceChild(view.node, node);
+      if (view) {
+        var parent = node.parentNode;
+        parent.replaceChild(view.node, node);
 
-      var selector = '*[data-channel="' + packet.channel + '"]';
-      var nodes = pw.node.toA(parent.querySelectorAll(selector));
-      pw.instruct.perform(pw.collection.fromNodes(nodes, selector), packet.payload);
+        var selector = '*[data-channel="' + packet.channel + '"]';
+        var nodes = pw.node.toA(parent.querySelectorAll(selector));
+        pw.instruct.perform(pw.collection.fromNodes(nodes, selector), packet.payload);
+      } else {
+        console.log('trouble fetching view :(');
+      }
     });
   },
 
@@ -74,6 +78,8 @@ pw.instruct = {
         collection = mutatedViews;
       }
     });
+
+    pw.component.findAndInit(collection.node);
   },
 
   performAttr: function (context, attrInstructions) {
