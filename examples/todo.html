@@ -18,12 +18,11 @@
     <input type="submit" value="create">
   </form>
 
-  <div data-ui="todo-list">
+  <div data-ui="todo-list" style="margin-top: 15px">
     <div data-ui="todo-count" style="margin-bottom: 5px"></div>
 
     <div data-scope="todo" data-template>
-      <!-- this is a template that defines the starting point for new `todo` 
-           state (removed when the component boots up) -->
+      <!-- this is a template that defines the starting point for new    todo state (removed when the component boots up) -->
       <input type="checkbox" data-prop="completed">
 
       <a href="#" data-ui="todo-delete">
@@ -37,10 +36,10 @@
   </div>
 
   <script>
-    pw.component.register('todo-form', function (view, config) {
+    pw.component.register('todo-form', function(view, config) {
       // called with each mutation that occurs in the view
       // (like when the form is submitted)
-      this.mutation = function (mutation) {
+      this.mutation = function(mutation) {
         mutation.id = pw.util.guid();
 
         // announce that we created a todo, with the state
@@ -51,42 +50,42 @@
       };
     });
 
-    pw.component.register('todo-list', function (view, config) {
-      this.listen('todo:created', function (todo) {
+    pw.component.register('todo-list', function(view, config) {
+      this.listen('todo:created', function(todo) {
         this.append(todo);
       });
 
-      this.listen('todo:deleted', function (todo) {
+      this.listen('todo:deleted', function(todo) {
         this.delete(todo);
       });
 
-      this.listen('control:undo', function () {
+      this.listen('control:undo', function() {
         this.rollback();
       });
 
-      this.listen('control:revert', function () {
+      this.listen('control:revert', function() {
         this.revert();
       });
     });
 
-    pw.component.register('todo-delete', function (view, config) {
+    pw.component.register('todo-delete', function(view, config) {
       var self = this;
-      view.node.addEventListener('click', function (evt) {
+      view.node.addEventListener('click', function(evt) {
         pw.component.broadcast('todo:deleted', self.parent());
         evt.preventDefault();
       });
     });
 
-    pw.component.register('todo-count', function (view, config) {
+    pw.component.register('todo-count', function(view, config) {
       // registers the count to be dependent on the parent state
       //
       // the parent state is passed to the callback, where it's transformed
       // into the state needed by this component then passed to
       // the transform function
-      this.dependent(function (todos) {
+      this.dependent(function(todos) {
         var n = todos.length;
-        var c = todos.filter(function (s) {
-          return s.completed === true;
+        var c = todos.filter(function(s) {
+          return s.completed === 'on';
         }).length;
 
         return {
@@ -95,19 +94,19 @@
         };
       });
 
-      this.transform = function (state) {
+      this.transform = function(state) {
         view.node.innerText = state.completed + ' / ' + state.total;
       };
     });
 
-    pw.component.register('undo', function (view, config) {
-      view.node.addEventListener('click', function () {
+    pw.component.register('undo', function(view, config) {
+      view.node.addEventListener('click', function() {
         pw.component.broadcast('control:undo');
       });
     });
 
-    pw.component.register('revert', function (view, config) {
-      view.node.addEventListener('click', function () {
+    pw.component.register('revert', function(view, config) {
+      view.node.addEventListener('click', function() {
         pw.component.broadcast('control:revert');
       });
     });
