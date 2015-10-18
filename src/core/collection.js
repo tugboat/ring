@@ -64,23 +64,22 @@ pw_Collection.prototype = {
       }, this);
     }
 
-    views.forEach(function (view) {
-      pw.component.findAndInit(view.node);
-    });
-
     this.views = this.views.concat(views);
   },
 
   order: function (orderedIds) {
-    var match;
-
     orderedIds.forEach(function (id) {
       var match = this.views.find(function (view) {
-        return parseInt(view.node.getAttribute('data-id')) === id;
+        return view.node.getAttribute('data-id') == id.toString();
       });
 
       if (match) {
         match.node.parentNode.appendChild(match.node);
+
+        // also reorder the list of views
+        var i = this.views.indexOf(match);
+        this.views.splice(i, 1);
+        this.views.push(match);
       }
     }, this);
   },
@@ -161,7 +160,9 @@ pw_Collection.prototype = {
             if (!self.views.find(function (view) {
               return view.node.getAttribute('data-id') === (datum.id || '').toString()
             })) {
-              self.addView(view.clone());
+              var viewToAdd = view.clone();
+              viewToAdd.node.setAttribute('data-id', datum.id);
+              self.addView(viewToAdd);
             }
           }, self);
 
@@ -195,13 +196,15 @@ pw_Collection.prototype = {
 
   apply: function (data, fn) {
     this.match(data, function () {
-      this.bind(data, fn);
       var id;
+
       this.order(data.map(function (datum) {
         if (id = datum.id) {
           return id.toString();
         }
       }));
+
+      this.bind(data, fn);
     });
   },
 
