@@ -249,6 +249,8 @@ pw_Component.prototype = {
   mutated: function (node) {
     this.mutation(this.state.diffNode(node));
     this.state.update();
+
+    pw.node.trigger('mutated', this.node, this.state.current());
   },
 
   mutation: function (mutation) {
@@ -273,6 +275,8 @@ pw_Component.prototype = {
         }
       });
     }
+
+    pw.node.trigger('mutated', this.node, this.state.current());
   },
 
   revert: function () {
