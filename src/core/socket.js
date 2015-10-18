@@ -158,8 +158,13 @@ pw_Socket.prototype = {
       uri: uri
     }, function (res) {
       var view = pw.view.fromStr(res.body);
-      view.node.removeAttribute('data-id');
-      cb(view);
+
+      if (view.node) {
+        view.node.removeAttribute('data-id');
+        cb(view);
+      } else {
+        cb();
+      }
     });
   }
 };
