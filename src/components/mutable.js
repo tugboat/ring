@@ -55,9 +55,7 @@ pw.component.register('mutable', function (view, config) {
       }
 
       pw.component.broadcast('response:received', { response: res });
-
-      // TODO: not sure we want to do this
-      // self.revert();
+      self.revert();
     });
   }
 });
