@@ -164,7 +164,12 @@ pw_Component.prototype = {
     // make it mutable
     var mutableCb = function (evt) {
       evt.preventDefault();
-      self.mutated(pw.node.scope(evt.target));
+
+      var scope = pw.node.scope(evt.target);
+
+      if (scope) {
+        self.mutated(scope);
+      }
     };
 
     node.addEventListener('submit', mutableCb);
