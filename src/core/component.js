@@ -31,6 +31,10 @@ pw.component = {
 
   findAndInit: function (node) {
     pw.node.byAttr(node, 'data-ui').forEach(function (uiNode) {
+      if (uiNode._ui) {
+        return;
+      }
+
       var name = uiNode.getAttribute('data-ui');
       var cfn = components[name] || pw.component.init;
 
@@ -48,6 +52,8 @@ pw.component = {
 
       pw.component.registerForChannel(component, channel);
       componentInstances[name].push(component);
+
+      uiNode._ui = true;
     });
   },
 
