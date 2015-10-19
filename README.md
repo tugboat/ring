@@ -3,7 +3,15 @@
 **Ring** is a JavaScript library for dealing with UI state on the client side
 of a Pakyow app. It's intended to be used with the
 [pakyow-ui](https://github.com/pakyow/pakyow/tree/master/pakyow-ui) library and
-in context of a full Pakyow app, not in a standalone fashion.
+in context of a full Pakyow app, although it can be used in a standalone manner.
+
+Ring implements the View Transformation Protocol:
+
+- http://pakyow.org/docs/concepts/view-transformation-protocol
+
+It also enables Simple State Propagation:
+
+- http://pakyow.org/docs/concepts/simple-state-propagation
 
 ### Transformations
 
