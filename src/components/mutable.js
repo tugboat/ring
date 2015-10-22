@@ -43,10 +43,15 @@ pw.component.register('mutable', function (view, config) {
 
     var self = this;
     window.socket.send(message, function (res) {
-      if (res.status === 302 && res.headers.Location !== window.location.pathname) {
+      if (res.status === 302) {
         var dest = res.headers.Location;
-        //TODO trigger a response:redirect instead and let navigator subscribe
-        history.pushState({ uri: dest }, dest, dest);
+
+        if (dest == window.location.pathname && window.context.name !== 'default') {
+          history.pushState({ uri: dest }, dest, dest);
+        } else {
+          //TODO trigger a response:redirect instead and let navigator subscribe
+          history.pushState({ uri: dest }, dest, dest);
+        }
         return;
       } else if (res.status === 400) {
         // bad request

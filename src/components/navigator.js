@@ -28,6 +28,8 @@ function boot() {
       }
 
       if (uri == window.location.pathname) {
+        pw.component.broadcast(window.context.name + ':navigator:exit');
+
         window.context = {
           _state: state,
           name: 'default',
