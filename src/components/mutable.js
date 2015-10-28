@@ -55,6 +55,7 @@ pw.component.register('mutable', function (view, config) {
         return;
       } else if (res.status === 400) {
         // bad request
+        return;
       } else {
         self.state.rollback();
       }
