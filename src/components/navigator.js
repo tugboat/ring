@@ -87,7 +87,8 @@ function handleState(state, direction) {
       _state: state,
       name: state.context,
       uri: state.r_uri,
-      container: state.container
+      container: state.container,
+      partial: state.partial
     };
   } else {
     state.r_uri = uri;
@@ -108,6 +109,7 @@ function handleState(state, direction) {
         state.r_uri = document.location.pathname + '#:' + window.context.name + '/' + uri;
         state.context = window.context.name;
         state.container = window.context.container;
+        state.partial = window.context.partial;
       }
     }
   }
@@ -120,6 +122,10 @@ function handleState(state, direction) {
 
   if (state.container) {
     opts.container = state.container;
+  }
+
+  if (state.partial) {
+    opts.partial = state.partial;
   }
 
   window.socket.send(opts, function (payload) {
