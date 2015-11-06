@@ -46,13 +46,12 @@ pw.component.register('mutable', function (view, config) {
       if (res.status === 302) {
         var dest = res.headers.Location;
 
-        if (dest == window.location.pathname && window.context.name !== 'default') {
+        if (dest == window.location.pathname && (!window.context || window.context.name !== 'default')) {
           history.pushState({ uri: dest }, dest, dest);
         } else {
           //TODO trigger a response:redirect instead and let navigator subscribe
           history.pushState({ uri: dest }, dest, dest);
         }
-        return;
       } else if (res.status === 400) {
         // bad request
         return;
