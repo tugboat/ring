@@ -356,12 +356,10 @@ pw.node = {
       } else {
         node.checked = false;
       }
+    } else if (node.tagName === 'TEXTAREA' || pw.node.isSelfClosingTag(node)) {
+      node.value = value;
     } else {
-      if (pw.node.isSelfClosingTag(node)) {
-        node.value = value;
-      } else {
-        node.innerHTML = value;
-      }
+      node.innerHTML = value;
     }
   },
 
