@@ -65,7 +65,9 @@ var pw_Socket = function (url, cb) {
 
   this.ws = new WebSocket(url);
 
-  this.id = url.split('socket_connection_id=')[1]
+  this.id = url.split('socket_connection_id=')[1];
+
+  var pingInterval;
 
   this.ws.onmessage = function (evt) {
     pw.component.broadcast('socket:loaded');
@@ -84,6 +86,7 @@ var pw_Socket = function (url, cb) {
 
   this.ws.onclose = function (evt) {
     console.log('socket closed');
+    clearInterval(pingInterval);
     self.reconnect();
   };
 
@@ -93,6 +96,10 @@ var pw_Socket = function (url, cb) {
     if(self.initCb) {
       self.initCb(self);
     }
+
+    pingInterval = setInterval(function () {
+      self.send({ action: 'ping' });
+    }, 30000);
   }
 };
 
@@ -116,7 +123,7 @@ pw_Socket.prototype = {
 
     var selector = '*[data-channel="' + packet.channel + '"]';
 
-    if (packet.channel.split(':')[0] === 'component') {
+    if (packet.channel && packet.channel.split(':')[0] === 'component') {
       pw.component.push(packet);
       return;
     }
