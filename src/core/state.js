@@ -89,7 +89,7 @@ pw_State.prototype = {
     this.snapshots.push(copy);
   },
 
-  delete: function (state) {
+  remove: function (state) {
     var copy = this.copy();
     var match = copy.find(function (s) {
       return s.id === state.id;

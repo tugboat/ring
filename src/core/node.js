@@ -185,11 +185,11 @@ pw.node = {
   },
 
   // creates a context in which view manipulations can occur
-  with: function(node, cb) {
+  invoke: function(node, cb) {
     cb.call(node);
   },
 
-  for: function(node, data, cb) {
+  invokeWithData: function(node, data, cb) {
     if (pw.node.isNodeList(node)) {
       node = pw.node.toA(node);
     }
@@ -227,14 +227,14 @@ pw.node = {
   },
 
   repeat: function(node, data, cb) {
-    pw.node.for(pw.node.match(node, data), data, cb);
+    pw.node.invokeWithData(pw.node.match(node, data), data, cb);
   },
 
   // binds an object to a node
   bind: function (data, node, cb) {
     var scope = pw.node.findBindings(node)[0];
 
-    pw.node.for(node, data, function(dm) {
+    pw.node.invokeWithData(node, data, function(dm) {
       if (!dm) {
         return;
       }

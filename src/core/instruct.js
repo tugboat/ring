@@ -55,8 +55,17 @@ pw.instruct = {
       var value = instruction[1];
       var nested = instruction[2];
 
+      // remap instructions to the ring name
+      if (method === 'with') {
+        method = 'invoke';
+      }
+
+      if (method === 'for') {
+        method = 'invokeWithData';
+      }
+
       if (collection[method]) {
-        if (method == 'with' || method == 'for' || method == 'bind' || method == 'repeat' || method == 'apply') {
+        if (method == 'invoke' || method == 'invokeWithData' || method == 'bind' || method == 'repeat' || method == 'apply') {
           collection.endpoint(self)[method].call(collection, value, function (datum) {
             pw.instruct.perform(this, nested[value.indexOf(datum)]);
           });

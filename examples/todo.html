@@ -56,7 +56,7 @@
       });
 
       this.listen('todo:deleted', function(todo) {
-        this.delete(todo);
+        this.remove(todo);
       });
 
       this.listen('control:undo', function() {

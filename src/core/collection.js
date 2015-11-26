@@ -118,11 +118,11 @@ pw_Collection.prototype = {
     return pw.collection.init(prependedViews);
   },
 
-  with: function (cb) {
-    pw.node.with(this.views, cb);
+  invoke: function (cb) {
+    pw.node.invoke(this.views, cb);
   },
 
-  for: function(data, fn) {
+  invokeWithData: function(data, fn) {
     data = Array.ensure(data);
 
     this.views.forEach(function (view, i) {
@@ -194,12 +194,12 @@ pw_Collection.prototype = {
 
   repeat: function (data, fn) {
     this.match(data, function () {
-      this.for(data, fn);
+      this.invokeWithData(data, fn);
     });
   },
 
   bind: function (data, fn) {
-    this.for(data, function(datum) {
+    this.invokeWithData(data, function(datum) {
       this.bind(datum);
 
       if(!(typeof fn === 'undefined')) {

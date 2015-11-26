@@ -295,8 +295,8 @@ pw_Component.prototype = {
     }
   },
 
-  delete: function (data) {
-    this.state.delete(data);
+  remove: function (data) {
+    this.state.remove(data);
     this.transform(this.state.current());
   },
 

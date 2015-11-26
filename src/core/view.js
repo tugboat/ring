@@ -55,16 +55,16 @@ pw_View.prototype = {
     return pw.attrs.init(this);
   },
 
-  with: function (cb) {
-    pw.node.with(this.node, cb);
+  invoke: function (cb) {
+    pw.node.invoke(this.node, cb);
   },
 
   match: function (data) {
     pw.node.match(this.node, data);
   },
 
-  for: function (data, cb) {
-    pw.node.for(this.node, data, cb);
+  invokeWithData: function (data, cb) {
+    pw.node.invokeWithData(this.node, data, cb);
   },
 
   repeat: function (data, cb) {
