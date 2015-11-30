@@ -180,11 +180,10 @@ pw_Component.prototype = {
 
     // make it mutable
     var mutableCb = function (evt) {
-      evt.preventDefault();
-
       var scope = pw.node.scope(evt.target);
 
       if (scope) {
+        evt.preventDefault();
         self.mutated(scope);
       }
     };
