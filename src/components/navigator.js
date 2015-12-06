@@ -135,7 +135,8 @@ function handleState(state, direction) {
       var body = payload.body[0];
 
       if (body.match(/<title>/)) {
-        document.title = body.split(/<title>/)[1].split('</title>')[0];
+        var title = body.split(/<title>/)[1].split('</title>')[0];
+        document.querySelector('title').innerHTML = title;
       }
 
       if (body.match(/<body [^>]*>/)) {
