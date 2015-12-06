@@ -139,12 +139,10 @@ function handleState(state, direction) {
         document.querySelector('title').innerHTML = title;
       }
 
-      if (body.match(/<body [^>]*>/)) {
-        document.body.innerHTML = body.split(/<body [^>]*>/)[1].split('</body>')[0];
-      } else {
-        document.body.innerHTML = body;
-      }
+      var doc = document.documentElement.cloneNode();
+      doc.innerHTML = body;
 
+      document.body.innerHTML = doc.querySelector('body').innerHTML;
       pw.component.findAndInit(document.querySelectorAll('body')[0]);
     }
   });
