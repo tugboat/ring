@@ -1,3 +1,14 @@
+# 0.2.1 / 2015-12-18
+
+  * Now scoped form submissions are intercepted by `mutable`
+  * Sets page title as html rather than text
+  * Prevents page flicker when changing pages in `navigator
+  * Fixes several bugs with view matching
+  * Adds a config option to `mutable` that prevents a revert
+  * Response is now acknowledged by `mutable` even if it's a bad request
+  * Binding now only sets a value for a prop if one is present
+  * Now properly creates a view containing table elements (e.g. `tr`)
+
 # 0.2.0 / 2015-11-25
 
   * Navigator handles queries for partials
