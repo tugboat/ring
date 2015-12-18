@@ -9,8 +9,15 @@ pw.view = {
   },
 
   fromStr: function (str) {
-    var e = document.createElement("div");
+    var nodeType = 'div';
+
+    if (str.match(/^<tr/) || str.match(/^<tbody/)) {
+      nodeType = 'table';
+    }
+
+    var e = document.createElement(nodeType);
     e.innerHTML = str;
+
     return pw.view.init(e.childNodes[0]);
   }
 };
