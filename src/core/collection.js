@@ -19,7 +19,7 @@ pw.collection = {
 var pw_Collection = function (views, parent, scope) {
   this.views = views;
   this.parent = parent;
-  this.scope = scope;
+  this._scope = scope;
 };
 
 pw_Collection.prototype = {
