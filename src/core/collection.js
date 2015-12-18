@@ -148,13 +148,13 @@ pw_Collection.prototype = {
       this.views.slice(0).forEach(function (view) {
         var id = view.node.getAttribute('data-id');
 
-        if (!id) {
+        if (!id && data[0].id) {
           this.removeView(view);
           return;
-        }
-
-        if (!data.find(function (datum) { return datum.id && datum.id.toString() === id })) {
-          this.removeView(view);
+        } else if (id) {
+          if (!data.find(function (datum) { return datum.id && datum.id.toString() === id })) {
+            this.removeView(view);
+          }
         }
       }, this);
 
