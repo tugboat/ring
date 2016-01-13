@@ -1,3 +1,9 @@
+# 0.2.2 / 2016-01-13
+
+  * Navigator now scrolls the page to the top
+  * Fastlink now respects cmd-click
+  * Modal supports a config href value
+
 # 0.2.1 / 2015-12-18
 
   * Now scoped form submissions are intercepted by `mutable`
