@@ -144,6 +144,8 @@ function handleState(state, direction) {
 
       document.body.innerHTML = doc.querySelector('body').innerHTML;
       pw.component.findAndInit(document.querySelectorAll('body')[0]);
+
+      document.body.scrollTop = document.documentElement.scrollTop = 0;
     }
   });
 }
