@@ -1,3 +1,7 @@
+# 0.2.3
+
+  * Adds broadcast bubbling to components
+
 # 0.2.2 / 2016-01-13
 
   * Navigator now scrolls the page to the top

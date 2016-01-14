@@ -210,6 +210,20 @@ pw_Component.prototype = {
     pw.component.deregisterForBroadcast(channel, this);
   },
 
+  // Bubbles an event up to a parent component. Intended to be used
+  // as an alternative to `broadcast` in cases where child components
+  // have an impact on their parents.
+  bubble: function (channel, payload) {
+    var parentComponent = pw.node.component(this.node.parentNode);
+    console.log('parent', parentComponent);
+
+    (channelBroadcasts[channel] || []).forEach(function (cbTuple) {
+      if (cbTuple[1].node == parentComponent) {
+        cbTuple[0].call(cbTuple[1], payload);
+      }
+    });
+  },
+
   //TODO this is pretty similary to processing instructions
   // for views in that we also have to handle the empty case
   //
