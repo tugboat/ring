@@ -80,6 +80,9 @@ function handleState(state, direction) {
     return;
   }
 
+  uri = uri.replace(document.location.origin, '');
+  pw.component.broadcast('navigator:change', { uri: uri });
+
   if (state.context) {
     state.r_uri = document.location.pathname + '#:' + state.context + '/' + uri;
 

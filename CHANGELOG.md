@@ -1,6 +1,7 @@
 # 0.2.3
 
   * Adds broadcast bubbling to components
+  * Navigator now broadcasts a navigator:change event
 
 # 0.2.2 / 2016-01-13
 
