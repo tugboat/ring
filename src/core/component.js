@@ -215,7 +215,6 @@ pw_Component.prototype = {
   // have an impact on their parents.
   bubble: function (channel, payload) {
     var parentComponent = pw.node.component(this.node.parentNode);
-    console.log('parent', parentComponent);
 
     (channelBroadcasts[channel] || []).forEach(function (cbTuple) {
       if (cbTuple[1].node == parentComponent) {
