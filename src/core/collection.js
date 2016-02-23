@@ -225,7 +225,14 @@ pw_Collection.prototype = {
     });
   },
 
-  endpoint: function (endpoint) {
+  version: function (data, fn) {
+    var self = this;
+    this.match(data, function () {
+      this.invokeWithData(data, fn);
+    });
+  },
+
+  setEndpoint: function (endpoint) {
     this.endpoint = endpoint;
     return this;
   }

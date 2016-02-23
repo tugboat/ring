@@ -84,6 +84,37 @@ pw_View.prototype = {
 
   apply: function (data, cb) {
     pw.node.apply(data, this.node, cb);
+  },
+
+  use: function (version, cb) {
+    var self = this;
+
+    if (this.node.getAttribute('data-version') != version) {
+      this.node.setAttribute('data-version', version);
+
+      var lookup = {
+        scope: this.node.getAttribute('data-scope'),
+        version: version
+      };
+
+      window.socket.fetchView(lookup, function (view) {
+        view.node.setAttribute('data-channel', self.node.getAttribute('data-channel'));
+        pw.node.replace(self.node, view.node);
+        self.node = view.node;
+        cb();
+      });
+    } else {
+      cb();
+    }
+  },
+
+  setEndpoint: function (endpoint) {
+    this.endpoint = endpoint;
+    return this;
+  },
+
+  first: function () {
+    return this;
   }
 };
 
@@ -98,7 +129,7 @@ pw_View.prototype = {
 });
 
 // pass through functions without view
-['remove', 'clear', 'versionNode'].forEach(function (method) {
+['remove', 'clear', 'versionName'].forEach(function (method) {
   pw_View.prototype[method] = function () {
     return pw.node[method](this.node);
   };

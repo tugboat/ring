@@ -279,7 +279,7 @@ pw_Component.prototype = {
     }
 
     if (state.length > 0) {
-      this.view.scope(state[0].scope).endpoint(this.endpoint || this).apply(state);
+      this.view.scope(state[0].scope).setEndpoint(this.endpoint || this).apply(state);
     } else {
       pw.node.breadthFirst(this.view.node, function () {
         if (this.hasAttribute('data-scope')) {

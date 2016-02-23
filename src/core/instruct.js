@@ -22,7 +22,9 @@ pw.instruct = {
     });
   },
 
-  // TODO: make this smart and cache results
+  // TODO: make this smart and cache results, invalidating
+  // if the websocket connection reconnects (since that means
+  // the server probably restarted)
   template: function (view, cb) {
     var lookup = {};
 
@@ -47,10 +49,11 @@ pw.instruct = {
     });
   },
 
-  perform: function (collection, instructions) {
+  perform: function (collection, instructions, cb) {
     var self = this;
+    instructions = instructions || [];
 
-    (instructions || []).forEach(function (instruction, i) {
+    function instruct (subject, instruction) {
       var method = instruction[0];
       var value = instruction[1];
       var nested = instruction[2];
@@ -65,13 +68,26 @@ pw.instruct = {
       }
 
       if (collection[method]) {
-        if (method == 'invoke' || method == 'invokeWithData' || method == 'bind' || method == 'repeat' || method == 'apply') {
-          collection.endpoint(self)[method].call(collection, value, function (datum) {
-            pw.instruct.perform(this, nested[value.indexOf(datum)]);
+        if (method == 'invoke' || method == 'invokeWithData' || method == 'bind' || method == 'repeat' || method == 'apply' || method == 'version') {
+          var cbLength = collection.length();
+          var cbCount = 0;
+          var nestedCb = function () {
+            cbCount++;
+
+            if (cbCount == cbLength) {
+              next();
+            }
+          }
+          collection.setEndpoint(self)[method].call(collection, value, function (datum) {
+            pw.instruct.perform(this, nested[value.indexOf(datum)], nestedCb);
           });
           return;
         } else if (method == 'attrs') {
           self.performAttr(collection.attrs(), nested);
+          return;
+        } else if (method == 'use') {
+          collection.setEndpoint(self);
+          collection.use(value, next);
           return;
         } else {
           var mutatedViews = collection[method].call(collection, value);
@@ -82,13 +98,33 @@ pw.instruct = {
       }
 
       if (nested instanceof Array) {
-        pw.instruct.perform(mutatedViews, nested);
+        pw.instruct.perform(mutatedViews, nested, next);
+        return;
       } else if (mutatedViews) {
         collection = mutatedViews;
       }
-    });
 
-    pw.component.findAndInit(collection.node);
+      next();
+    };
+
+    var i = 0;
+    function next() {
+      if (i < instructions.length) {
+        instruct(collection, instructions[i++]);
+      } else {
+        done();
+      }
+    };
+
+    function done() {
+      if (cb) {
+        cb();
+      } else {
+        pw.component.findAndInit(collection.node);
+      }
+    };
+
+    next();
   },
 
   performAttr: function (context, attrInstructions) {
