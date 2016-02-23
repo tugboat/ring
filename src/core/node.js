@@ -112,7 +112,7 @@ pw.node = {
     }
 
     var next = node.parentNode;
-    if (next !== document) {
+    if (next && next !== document) {
       return pw.node.inForm(next);
     }
   },
@@ -124,7 +124,7 @@ pw.node = {
     }
 
     var next = node.parentNode;
-    if (next !== document) {
+    if (next && next !== document) {
       return pw.node.component(next);
     }
   },
@@ -136,7 +136,7 @@ pw.node = {
     }
 
     var next = node.parentNode;
-    if (next !== document) {
+    if (next && next !== document) {
       return pw.node.scope(next);
     }
   },
@@ -148,7 +148,7 @@ pw.node = {
     }
 
     var next = node.parentNode;
-    if (next !== document) {
+    if (next && next !== document) {
       return pw.node.scopeName(next);
     }
   },
@@ -160,7 +160,7 @@ pw.node = {
     }
 
     var next = node.parentNode;
-    if (next !== document) {
+    if (next && next !== document) {
       return pw.node.prop(next);
     }
   },
@@ -172,7 +172,7 @@ pw.node = {
     }
 
     var next = node.parentNode;
-    if (next !== document) {
+    if (next && next !== document) {
       return pw.node.propName(next);
     }
   },
