@@ -115,6 +115,10 @@ pw_View.prototype = {
 
   first: function () {
     return this;
+  },
+
+  length: function () {
+    return 1;
   }
 };
 
