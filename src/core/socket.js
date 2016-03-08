@@ -6,6 +6,7 @@ pw.init.register(function () {
   pw.socket.init({
     cb: function (socket) {
       window.socket = socket;
+      pw.component.broadcast('socket:available');
     }
   });
 });
