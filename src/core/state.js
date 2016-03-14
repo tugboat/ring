@@ -56,6 +56,12 @@ pw_State.prototype = {
 
   // gets the current represented state from the node and diffs it with the current state
   diffNode: function (node) {
+    if (node.hasAttribute('data-ui')) {
+      return {
+        '__nested': pw.state.build(pw.node.significant(node))
+      };
+    }
+
     return pw.state.build(pw.node.significant(pw.node.scope(node)))[0];
   },
 
