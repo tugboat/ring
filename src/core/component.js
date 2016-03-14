@@ -223,6 +223,20 @@ pw_Component.prototype = {
     });
   },
 
+  // Trickles an event down to child components. Intended to be used
+  // as an alternative to `broadcast` in cases where parent components
+  // have an impact on their children.
+  trickle: function (channel, payload) {
+    var channels = (channelBroadcasts[channel] || []);
+    pw.node.toA(this.node.getElementsByTagName('*')).forEach(function (node) {
+      channels.forEach(function (cbTuple) {
+        if (cbTuple[1].node == node) {
+          cbTuple[0].call(cbTuple[1], payload);
+        }
+      });
+    })
+  },
+
   //TODO this is pretty similary to processing instructions
   // for views in that we also have to handle the empty case
   //
