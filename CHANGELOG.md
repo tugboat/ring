@@ -1,3 +1,10 @@
+# 0.2.4
+
+  * Stubs `length` on view
+  * Adds broadcast to indicate window.socket is available
+  * Adds broadcast trickling to components
+  * Fixes node diffing for unscoped components
+
 # 0.2.3
 
   * Adds broadcast bubbling to components
