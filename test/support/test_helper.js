@@ -2,8 +2,6 @@ var jsdom = require('jsdom');
 var fs = require('fs');
 var inspect = require('object-inspect');
 
-_ = require('../../src/vendor/underscore');
-
 function loadDoc (filename) {
   return jsdom.jsdom(fs.readFileSync('test/support/views/' + filename, 'utf8'));
 }

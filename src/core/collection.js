@@ -235,6 +235,14 @@ pw_Collection.prototype = {
   setEndpoint: function (endpoint) {
     this.endpoint = endpoint;
     return this;
+  },
+
+  use: function (version, cb) {
+    if (this.length() == 1) {
+      this.views[0].use(version, cb);
+    } else {
+      console.log('Not sure how to call `use` on a collection with more than one view');
+    }
   }
 };
 

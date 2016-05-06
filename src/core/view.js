@@ -93,7 +93,7 @@ pw_View.prototype = {
       this.node.setAttribute('data-version', version);
 
       var lookup = {
-        scope: this.node.getAttribute('data-scope'),
+        scope: pw.node.scope(this.node).getAttribute('data-scope'),
         version: version
       };
 

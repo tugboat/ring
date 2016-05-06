@@ -58,8 +58,8 @@ pw_Attrs.prototype = {
           currentValue.add(value);
         }
       } else if (attr === 'style') {
-        value.pairs().forEach(function (kv) {
-          view.node.style[kv[0]] = kv[1];
+        Object.keys(value).forEach(function (k) {
+          view.node.style[k] = value[k];
         });
       } else if (this.findType(attr) === 'bool') {
         if (!view.node.hasAttribute(attr)) {
@@ -82,8 +82,8 @@ pw_Attrs.prototype = {
           currentValue.remove(value);
         }
       } else if (attr === 'style') {
-        value.pairs().forEach(function (kv) {
-          view.node.style[kv[0]] = view.node.style[kv[0]].replace(kv[1], '');
+        Object.keys(value).forEach(function (k) {
+          view.node.style[k] = view.node.style[k].replace(value[k], '');
         });
       } else if (this.findType(attr) === 'bool') {
         if (view.node.hasAttribute(attr)) {

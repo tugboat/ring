@@ -84,6 +84,7 @@ pw.instruct = {
           return;
         } else if (method == 'attrs') {
           self.performAttr(collection.attrs(), nested);
+          next();
           return;
         } else if (method == 'use') {
           collection.setEndpoint(self);
