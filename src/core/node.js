@@ -331,7 +331,11 @@ pw.node = {
       }
 
       if (v) {
-        if (v instanceof Array) {
+        // handles the case where the attribute value was a lambda
+        // that alters the value; we have to check one level in for
+        // an instruction set because values for attributes such as
+        // `class` will also be arrays
+        if (v instanceof Array && v[0] instanceof Array) {
           v.forEach(function (attrInstruction) {
             nAtrs[attrInstruction[0]](attr, attrInstruction[1]);
           });
