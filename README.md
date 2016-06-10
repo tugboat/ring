@@ -34,7 +34,7 @@ implemented as components, including:
 
 - FastLink: Processes links through the established WebSocket.
 - Loader: Adds a loader to the page whenever Ring is waiting on the network.
-- Mutable: Provides a mechanism for displaying pages in a modal context.
+- Modal: Provides a mechanism for displaying pages in a modal context.
 - Mutable: Interpret user interactions with a node as mutations in state.
 - Navigator: Handles navigating through WebSockets rather than HTTP.
 - Notifier: Presents notifications from the backend.
