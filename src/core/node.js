@@ -486,7 +486,7 @@ pw.node = {
       return Array.prototype.slice.call(nodeSet);
     } else {
      return [];
-     }
+    }
   },
 
   serialize: function (node) {
