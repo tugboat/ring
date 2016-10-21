@@ -1,3 +1,7 @@
+# 0.2.5
+
+  * Fixes toA so that it returns an empty array instead of erroring out when nodeSet is missing
+
 # 0.2.4
 
   * Stubs `length` on view
