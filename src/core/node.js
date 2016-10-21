@@ -482,7 +482,11 @@ pw.node = {
   },
 
   toA: function (nodeSet) {
-    return Array.prototype.slice.call(nodeSet);
+    if (nodeSet) {
+      return Array.prototype.slice.call(nodeSet);
+    } else {
+     return [];
+    }
   },
 
   serialize: function (node) {
