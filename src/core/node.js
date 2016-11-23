@@ -363,7 +363,7 @@ pw.node = {
     } else if (node.tagName === 'TEXTAREA' || pw.node.isSelfClosingTag(node)) {
       node.value = value;
     } else {
-      if (value) {
+      if (value || value === '') {
         node.innerHTML = value;
       }
     }
