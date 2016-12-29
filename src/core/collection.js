@@ -73,11 +73,9 @@ pw_Collection.prototype = {
         return;
       }
 
-      var match = this.views.find(function (view) {
-        return view.node.getAttribute('data-id') == id.toString();
-      });
-
-      if (match) {
+      var match = this.views[i];
+      var matchId = match.node.getAttribute('data-id');
+      if (matchId && matchId != id.toString()) {
         match.node.parentNode.appendChild(match.node);
 
         // also reorder the list of views
