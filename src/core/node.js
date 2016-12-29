@@ -449,7 +449,7 @@ pw.node = {
   },
 
   after: function (node, newNode) {
-    node.parentNode.insertBefore(newNode, this.nextSibling);
+    node.parentNode.insertBefore(newNode, node.nextSibling);
   },
 
   replace: function (node, newNode) {
